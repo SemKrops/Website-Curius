@@ -1,0 +1,60 @@
+---
+import Icoon from './Icoon.astro';
+import { datumDelen, tijdVak } from '../bron/datum.mjs';
+import { t as teksten } from '../lib/teksten.mjs';
+import { soortLabel } from '../lib/vorm.mjs';
+
+interface Props {
+  activiteit: any;
+  taal: 'nl' | 'en';
+  basis: string;
+  verloopt?: boolean;
+}
+const { activiteit: a, taal, basis, verloopt = false } = Astro.props;
+const t = teksten(taal);
+const d = datumDelen(a.start, taal);
+const label = soortLabel(a.soort ?? a.categorie, taal);
+const wanneer = [d.weekdag, tijdVak(a.start, a.eind, taal)].filter(Boolean).join(', ');
+---
+
+<article class="kaart" data-tot={verloopt ? (a.eind ?? a.start) : undefined}>
+  <div class="kaart__beeld kaart__beeld--poster">
+    {
+      a.poster ? (
+        <>
+          <img class="achter" src={a.poster} alt="" loading="lazy" decoding="async" aria-hidden="true" />
+          <img
+            class="voor"
+            src={a.poster}
+            srcset={a.srcset}
+            sizes="(min-width: 1200px) 380px, (min-width: 700px) 45vw, 92vw"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </>
+      ) : (
+        <div class="kaart__leeg">
+          <img src={`${basis}borstbeeld-wit.png`} alt="" loading="lazy" />
+        </div>
+      )
+    }
+    <span class="datumtegel kaart__datum"><b>{d.dag}</b><small>{d.maand}</small></span>
+  </div>
+  <div class="kaart__body">
+    <h3 class="kaart__titel"><a href={a.href}>{a.titel}</a></h3>
+    <div class="kaart__meta">
+      <span><Icoon naam="clock" grootte={15} />{wanneer}</span>
+      {a.locatie && <span><Icoon naam="pin" grootte={15} />{a.locatie}</span>}
+    </div>
+    {a.samenvatting && <p class="kaart__tekst">{a.samenvatting}</p>}
+    {
+      (a.inschrijvingOpen || label) && (
+        <div class="kaart__voet">
+          {a.inschrijvingOpen && <span class="label label--open">{t.inschrijvingOpen}</span>}
+          {label && <span class:list={['label', label.klasse]}>{label.tekst}</span>}
+        </div>
+      )
+    }
+  </div>
+</article>

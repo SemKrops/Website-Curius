@@ -1,0 +1,133 @@
+---
+// Een gewone pagina: kruimelpad, titel, het menu van het onderdeel en de inhoud.
+import Basis from '../layouts/Basis.astro';
+import ActiviteitKaart from './ActiviteitKaart.astro';
+import Abonneren from './Abonneren.astro';
+import Blokken from './Blokken.astro';
+import Hubkaarten from './Hubkaarten.astro';
+import Icoon from './Icoon.astro';
+import Kruimels from './Kruimels.astro';
+import Zijmenu from './Zijmenu.astro';
+import { VASTE_PADEN } from '../bron/verzamelen.mjs';
+import { t as teksten } from '../lib/teksten.mjs';
+import { isToekomst } from '../lib/vorm.mjs';
+
+interface Props {
+  site: any;
+  pagina: any;
+}
+const { site, pagina } = Astro.props;
+const taal = pagina.taal;
+const t = teksten(taal);
+const menu = site.talen[taal].menu;
+const sectie = menu.find((k: any) => k.pad && k.pad === pagina.sectie);
+const heeftMenu = sectie?.kinderen?.length > 0;
+const isActiviteitenLijst = pagina.pad === VASTE_PADEN[taal].activiteiten;
+const komend = site.activiteiten[taal].filter((a: any) => isToekomst(a));
+const tekstEerst = pagina.blokken[0]?.type === 'html';
+const kinderen = pagina.kinderen ?? [];
+---
+
+<Basis
+  site={site}
+  taal={taal}
+  titel={pagina.titel}
+  beschrijving={pagina.beschrijving}
+  afbeelding={pagina.afbeelding}
+  pagina={pagina}
+  sectieTitel={sectie?.titel}
+>
+  <header class="paginakop">
+    <div class="omhulsel">
+      <Kruimels site={site} taal={taal} kruimels={pagina.kruimels} titel={pagina.menuTitel ?? pagina.titel} />
+      <h1>{pagina.titel}</h1>
+    </div>
+  </header>
+
+  <div class="inhoud">
+    <div class:list={['omhulsel', 'inhoud-raster', !heeftMenu && 'inhoud-raster--zonder']}>
+      {
+        heeftMenu && (
+          <aside>
+            <Zijmenu site={site} taal={taal} pagina={pagina} />
+          </aside>
+        )
+      }
+      <div class="secties">
+        {
+          heeftMenu && (
+            <details class="zijmenu-mobiel" data-pagefind-ignore>
+              <summary>
+                <Icoon naam="menu" grootte={18} />
+                {t.inDezeSectie}: {sectie.titel}
+                <Icoon naam="chevronDown" grootte={18} class="pijl" />
+              </summary>
+              <Zijmenu site={site} taal={taal} pagina={pagina} />
+            </details>
+          )
+        }
+
+        {
+          pagina.soort === 'leden' && (
+            <div class="melding">
+              <Icoon naam="lock" grootte={24} />
+              <div>
+                <h2>{t.alleenLeden}</h2>
+                <p>{t.alleenLedenTekst}</p>
+                <a class="knop knop--primair knop--klein" href={pagina.bron}>
+                  <Icoon naam="login" grootte={17} />
+                  {t.inloggen}
+                </a>
+              </div>
+            </div>
+          )
+        }
+
+        {
+          pagina.inleiding && (
+            <div class="inleidingkaart">
+              <p>{pagina.inleiding.tekst}</p>
+              <a class="pijllink" href={pagina.inleiding.href}>
+                {t.leesVerder}: {pagina.inleiding.titel}
+                <Icoon naam="arrowRight" grootte={18} />
+              </a>
+            </div>
+          )
+        }
+
+        {
+          isActiviteitenLijst ? (
+            <>
+              {kinderen.length > 0 && <Hubkaarten kinderen={kinderen} taal={taal} />}
+              <section>
+                <div class="sectie__kop">
+                  <h2>{t.komendeActiviteiten}</h2>
+                </div>
+                {komend.length ? (
+                  <div class="kaarten">
+                    {komend.map((a: any) => (
+                      <ActiviteitKaart activiteit={a} taal={taal} basis={site.basis} verloopt />
+                    ))}
+                  </div>
+                ) : (
+                  <p class="melding">{t.geenActiviteiten}</p>
+                )}
+              </section>
+              <Abonneren taal={taal} feed={site.links[taal].agendaFeed} />
+            </>
+          ) : tekstEerst ? (
+            <>
+              <Blokken site={site} taal={taal} pagina={pagina} />
+              {kinderen.length > 0 && <Hubkaarten kinderen={kinderen} taal={taal} />}
+            </>
+          ) : (
+            <>
+              {kinderen.length > 0 && <Hubkaarten kinderen={kinderen} taal={taal} />}
+              <Blokken site={site} taal={taal} pagina={pagina} />
+            </>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</Basis>

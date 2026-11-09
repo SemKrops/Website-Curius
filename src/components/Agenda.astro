@@ -1,0 +1,71 @@
+---
+// Alle activiteiten per maand: eerst wat er nog komt, daaronder (ingeklapt) wat al geweest is.
+import AgendaPunt from './AgendaPunt.astro';
+import Abonneren from './Abonneren.astro';
+import Icoon from './Icoon.astro';
+import { maandJaar } from '../bron/datum.mjs';
+import { t as teksten } from '../lib/teksten.mjs';
+import { isToekomst } from '../lib/vorm.mjs';
+
+interface Props {
+  activiteiten: any[];
+  taal: 'nl' | 'en';
+  feed: string;
+}
+const { activiteiten, taal, feed } = Astro.props;
+const t = teksten(taal);
+const nu = Date.now();
+const komend = activiteiten.filter((a) => isToekomst(a, nu));
+const voorbij = activiteiten.filter((a) => !isToekomst(a, nu)).reverse();
+
+const perMaand = (lijst: any[]) => {
+  const groepen = new Map<string, any[]>();
+  for (const a of lijst) {
+    const sleutel = maandJaar(a.start, taal);
+    if (!groepen.has(sleutel)) groepen.set(sleutel, []);
+    groepen.get(sleutel)!.push(a);
+  }
+  return [...groepen.entries()];
+};
+---
+
+<div class="agenda">
+  <Abonneren taal={taal} feed={feed} />
+
+  {komend.length === 0 && <p class="melding">{t.geenActiviteiten}</p>}
+  {
+    perMaand(komend).map(([maand, lijst]) => (
+      <section class="agenda__maand">
+        <h3>{maand}</h3>
+        <ul class="agenda__lijst">
+          {lijst.map((a) => (
+            <AgendaPunt a={a} taal={taal} />
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+
+  {
+    voorbij.length > 0 && (
+      <details class="agenda__voorbij">
+        <summary class="knop knop--rand">
+          <Icoon naam="clock" grootte={17} />
+          {t.toonAfgelopen} ({voorbij.length})
+        </summary>
+        <div class="agenda" style="margin-top:24px">
+          {perMaand(voorbij).map(([maand, lijst]) => (
+            <section class="agenda__maand">
+              <h3>{maand}</h3>
+              <ul class="agenda__lijst">
+                {lijst.map((a) => (
+                  <AgendaPunt a={a} taal={taal} voorbij />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </details>
+    )
+  }
+</div>

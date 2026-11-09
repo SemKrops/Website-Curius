@@ -1,0 +1,177 @@
+---
+// De homepagina.
+import Basis from '../layouts/Basis.astro';
+import ActiviteitKaart from './ActiviteitKaart.astro';
+import Hubkaarten from './Hubkaarten.astro';
+import Icoon from './Icoon.astro';
+import Kaart from './Kaart.astro';
+import { leesDatumTekst } from '../bron/datum.mjs';
+import { VASTE_PADEN } from '../bron/verzamelen.mjs';
+import { icoonVoor, t as teksten } from '../lib/teksten.mjs';
+import { isToekomst } from '../lib/vorm.mjs';
+
+interface Props {
+  site: any;
+  pagina: any;
+}
+const { site, pagina } = Astro.props;
+const taal = pagina.taal;
+const t = teksten(taal);
+const basis = site.basis;
+const links = site.links[taal];
+
+const dias = pagina.blokken.find((b: any) => b.type === 'dias')?.dias ?? [];
+const snel = pagina.blokken.find((b: any) => b.type === 'snelkoppelingen');
+const komend = site.activiteiten[taal].filter((a: any) => isToekomst(a));
+
+// Uitgelicht: de eerste dia van de oude homepagina, of anders de eerstvolgende activiteit.
+const eerste = komend.find((a: any) => a.poster);
+const uitgelicht = dias[0]
+  ? { titel: dias[0].titel, href: dias[0].href, afbeelding: dias[0].afbeelding, boven: taal === 'nl' ? 'Uitgelicht' : 'Featured', knop: dias[0].knop }
+  : eerste
+    ? { titel: eerste.titel, href: eerste.href, afbeelding: eerste.poster, boven: t.komendeActiviteiten }
+    : undefined;
+
+// Ontdek Curius: de onderdelen uit het menu.
+const onderdelen = site.talen[taal].menu
+  .filter((k: any) => !k.leden && k.link && !k.link.extern)
+  .map((k: any) => {
+    const p = k.pad && site.paginas[k.pad];
+    return {
+      titel: k.titel,
+      href: k.link.href,
+      samenvatting: p?.beschrijving,
+      aantal: k.kinderen?.length || undefined,
+    };
+  });
+
+// Nieuws alleen tonen als er het afgelopen jaar iets is geplaatst.
+const nieuwsBlok = site.paginas[VASTE_PADEN[taal].nieuws]?.blokken.find((b: any) => b.type === 'kaarten');
+const nieuws = (nieuwsBlok?.kaarten ?? [])
+  .map((k: any) => ({ ...k, datum: leesDatumTekst(k.ondertitel)?.start }))
+  .filter((k: any) => k.datum && Date.now() - Date.parse(k.datum) < 365 * 24 * 3600_000)
+  .slice(0, 3);
+---
+
+<Basis site={site} taal={taal} pagina={pagina} beschrijving={t.heroTekst} zoekbaar={false}>
+  <section class="hero">
+    <img class="hero__borstbeeld" src={`${basis}borstbeeld-wit.png`} alt="" aria-hidden="true" />
+    <div class="omhulsel hero__raster">
+      <div>
+        <div class="hero__boventitel">S.V.T.B. Curius · Delft</div>
+        <h1>{t.heroKop}</h1>
+        <p>{t.heroTekst}</p>
+        <div class="hero__knoppen">
+          <a class="knop knop--wit" href={links.activiteiten}>
+            <Icoon naam="calendar" grootte={18} />{t.komendeActiviteiten}
+          </a>
+          <a class="knop knop--glas" href={links.lidWorden}>
+            <Icoon naam="userPlus" grootte={18} />{t.lidWorden}
+          </a>
+        </div>
+      </div>
+      {
+        uitgelicht && (
+          <a class="uitgelicht" href={uitgelicht.href}>
+            <div class="uitgelicht__beeld">
+              {uitgelicht.afbeelding && (
+                <>
+                  <img class="achter" src={uitgelicht.afbeelding} alt="" aria-hidden="true" />
+                  <img class="voor" src={uitgelicht.afbeelding} alt="" />
+                </>
+              )}
+            </div>
+            <div class="uitgelicht__body">
+              <div>
+                <small>{uitgelicht.boven}</small>
+                <strong>{uitgelicht.titel}</strong>
+              </div>
+              <span class="uitgelicht__pijl">
+                <Icoon naam="arrowRight" grootte={20} />
+              </span>
+            </div>
+          </a>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    snel && (
+      <div class="omhulsel snel">
+        <nav class="snel__kaart" aria-labelledby="snel-titel">
+          <h2 class="snel__titel" id="snel-titel">
+            {snel.titel || t.gaDirectNaar}
+          </h2>
+          {snel.links.map((l: any) => (
+            <a class="snel__link" href={l.href}>
+              <span class="hubkaart__icoon">
+                <Icoon naam={icoonVoor(l.href + ' ' + l.titel)} grootte={20} />
+              </span>
+              {l.titel}
+              <Icoon naam="arrowRight" grootte={18} class="pijl" />
+            </a>
+          ))}
+        </nav>
+      </div>
+    )
+  }
+
+  <section class="blok">
+    <div class="omhulsel">
+      <div class="blokkop">
+        <div>
+          <h2>{t.komendeActiviteiten}</h2>
+        </div>
+        <div class="blokkop__links">
+          <a class="knop knop--rand knop--klein" href={links.kalender}><Icoon naam="calendar" grootte={17} />{t.agenda}</a>
+          <a class="knop knop--zacht knop--klein" href={links.activiteiten}>{t.alleActiviteiten}<Icoon naam="arrowRight" grootte={17} /></a>
+        </div>
+      </div>
+      {
+        komend.length ? (
+          <div class="kaarten kaarten--schuif">
+            {komend.slice(0, 6).map((a: any) => (
+              <ActiviteitKaart activiteit={a} taal={taal} basis={basis} verloopt />
+            ))}
+          </div>
+        ) : (
+          <p class="melding">{t.geenActiviteiten}</p>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="blok blok--wit">
+    <div class="omhulsel">
+      <div class="blokkop">
+        <div>
+          <h2>{t.ontdek}</h2>
+          <p>{t.ontdekTekst}</p>
+        </div>
+      </div>
+      <Hubkaarten kinderen={onderdelen} taal={taal} compact />
+    </div>
+  </section>
+
+  {
+    nieuws.length > 0 && (
+      <section class="blok">
+        <div class="omhulsel">
+          <div class="blokkop">
+            <h2>{t.nieuws}</h2>
+            <a class="knop knop--zacht knop--klein" href={links.nieuws}>
+              {t.alleNieuws}
+              <Icoon naam="arrowRight" grootte={17} />
+            </a>
+          </div>
+          <div class="kaarten">
+            {nieuws.map((k: any) => (
+              <Kaart kaart={k} basis={basis} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</Basis>

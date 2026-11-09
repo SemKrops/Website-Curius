@@ -1,0 +1,75 @@
+---
+// Vacatures, stages en afstudeeropdrachten, met knoppen om op soort te filteren.
+import Icoon from './Icoon.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  vacatures: any[];
+  taal: 'nl' | 'en';
+  titel?: string;
+}
+const { taal, titel } = Astro.props;
+// Nieuwste bovenaan; zonder datum onderaan.
+const vacatures = [...Astro.props.vacatures].sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? ''));
+const t = teksten(taal);
+const soorten = [...new Map(vacatures.filter((v) => v.soort).map((v) => [v.soort, v.soort])).keys()];
+const telling = (s: string) => vacatures.filter((v) => v.soort === s).length;
+const datum = (iso?: string) =>
+  iso ? new Intl.DateTimeFormat(taal === 'nl' ? 'nl-NL' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso)) : '';
+const id = 'vac-' + Math.random().toString(36).slice(2, 8);
+---
+
+<section class="vacatureblok" data-vacatures={id}>
+  {titel && <h2 style="font-size:1.4rem;margin:0 0 14px">{titel}</h2>}
+  {
+    soorten.length > 1 && vacatures.length > 5 && (
+      <div class="filters" role="group" aria-label={t.soort} data-pagefind-ignore>
+        <button class="filter" type="button" aria-pressed="true" data-filter="">
+          {t.alleSoorten}
+          <small>{vacatures.length}</small>
+        </button>
+        {soorten.map((s) => (
+          <button class="filter" type="button" aria-pressed="false" data-filter={s}>
+            {s}
+            <small>{telling(s)}</small>
+          </button>
+        ))}
+      </div>
+    )
+  }
+  <ul class="vacatures">
+    {
+      vacatures.map((v) => (
+        <li class="vacature" data-soort={v.soort ?? ''}>
+          <div class="vacature__logo">{v.logo ? <img src={v.logo} alt="" loading="lazy" /> : <Icoon naam="briefcase" grootte={24} />}</div>
+          <div>
+            <h3>
+              <a href={v.href}>{v.titel}</a>
+            </h3>
+            <div class="vacature__meta">
+              {v.bedrijf && <span>{v.bedrijf}</span>}
+              {v.soort && <span>{v.soort}</span>}
+              {v.niveau && <span>{v.niveau}</span>}
+            </div>
+            {v.samenvatting && <p class="vacature__tekst">{v.samenvatting}</p>}
+          </div>
+          {v.datum && <span class="vacature__datum">{datum(v.datum)}</span>}
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-vacatures]').forEach((blok) => {
+    const knoppen = [...blok.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const items = [...blok.querySelectorAll<HTMLElement>('.vacature')];
+    for (const knop of knoppen) {
+      knop.addEventListener('click', () => {
+        const soort = knop.dataset.filter ?? '';
+        knoppen.forEach((k) => k.setAttribute('aria-pressed', String(k === knop)));
+        items.forEach((item) => (item.hidden = !!soort && item.dataset.soort !== soort));
+      });
+    }
+  });
+</script>

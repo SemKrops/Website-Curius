@@ -1,0 +1,385 @@
+---
+// De kop van elke pagina: logo, hoofdmenu met uitklapmenu's, zoeken, taal en
+// de knoppen voor leden. Op een telefoon wordt het menu een schuifpaneel.
+import Icoon from './Icoon.astro';
+import { datumDelen, tijdVak } from '../bron/datum.mjs';
+import { icoonVoor, t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  pagina?: any;
+}
+const { site, taal, pagina } = Astro.props;
+const t = teksten(taal);
+const links = site.links[taal];
+const basis = site.basis;
+const menu = site.talen[taal].menu;
+const secties = menu.filter((k: any) => !k.leden && k.link);
+const sectieVan = pagina?.sectie;
+const ander = pagina?.ander ?? `${basis}${taal === 'nl' ? 'en' : 'nl'}/`;
+
+// Hoeveel knoppen er naast elkaar passen hangt af van de breedte van het scherm. Het script
+// onderaan meet dat precies; deze klassen zijn een goede schatting voor de eerste weergave.
+const vanaf = [1366, 1440, 1632];
+const plekVan = (i: number) => (i < 4 ? 'is-vast' : i < 4 + vanaf.length ? `vanaf-${vanaf[i - 4]}` : 'is-meer');
+const meerKlassen = ['meer', ...vanaf.map((b, i) => secties.length <= 5 + i && `meer--weg-${b}`)];
+
+const nu = Date.now();
+const binnenkort = site.activiteiten[taal].filter((a: any) => Date.parse(a.eind ?? a.start) >= nu).slice(0, 3);
+const isActiviteiten = (s: any) => s.pad === site.links[taal].activiteiten.slice(basis.length).replace(/\/$/, '');
+const beschrijvingVan = (s: any) => {
+  const p = s.pad && site.paginas[s.pad];
+  const tekst = p?.beschrijving ?? '';
+  return tekst.length > 150 ? tekst.slice(0, tekst.lastIndexOf(' ', 145)) + '…' : tekst;
+};
+const isNaarBuiten = (k: any) => k.link?.extern || k.link?.oud;
+---
+
+<a class="naar-inhoud" href="#inhoud">{t.naarInhoud}</a>
+<header class="kop" data-kop>
+  <div class="omhulsel kop__binnen">
+    <a class="logo" href={links.home} aria-label={`${t.naam}, ${t.home}`}>
+      <img src={`${basis}borstbeeld-rood.png`} alt="" width="34" height="36" />
+      <span class="logo__woord">
+        <span class="logo__naam">CURIUS</span>
+        <span class="logo__sub">{t.ondertitel}</span>
+      </span>
+    </a>
+
+    <nav aria-label={t.menu}>
+      <ul class="hoofdmenu">
+        {
+          secties.map((s: any, i: number) => (
+            <li class={plekVan(i)} data-sectie={i}>
+              {s.kinderen?.length ? (
+                <button
+                  class="hoofdmenu__knop"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls={`paneel-${i}`}
+                  aria-current={sectieVan === s.pad ? 'true' : undefined}
+                  data-paneel={`paneel-${i}`}
+                >
+                  {s.titel}
+                  <Icoon naam="chevronDown" grootte={16} />
+                </button>
+              ) : (
+                <a
+                  class="hoofdmenu__knop"
+                  href={s.link.href}
+                  aria-current={sectieVan === s.pad ? 'true' : undefined}
+                  rel={s.link.extern ? 'noopener' : undefined}
+                >
+                  {s.titel}
+                  {s.link.extern && <Icoon naam="external" grootte={14} />}
+                </a>
+              )}
+            </li>
+          ))
+        }
+        {
+          secties.length > 4 && (
+            <li class:list={meerKlassen}>
+              <button class="hoofdmenu__knop" type="button" aria-expanded="false" aria-controls="paneel-meer" data-paneel="paneel-meer">
+                {t.meer}
+                <Icoon naam="chevronDown" grootte={16} />
+              </button>
+            </li>
+          )
+        }
+      </ul>
+    </nav>
+
+    <div class="kop__acties">
+      <button class="zoekknop" type="button" data-open-zoeken aria-label={t.zoeken} title={`${t.zoeken} (/)`}>
+        <Icoon naam="search" grootte={18} />
+      </button>
+      <a class="taalknop verberg-mobiel" href={ander} hreflang={taal === 'nl' ? 'en' : 'nl'} aria-label={t.taalLabel}>
+        <Icoon naam="globe" grootte={17} />{t.taalKort}
+      </a>
+      <a class="knop knop--rand knop--klein verberg-mobiel" href={links.leden}>
+        <Icoon naam="login" grootte={17} />{t.mijnCurius}
+      </a>
+      <a class="knop knop--primair knop--klein verberg-mobiel" href={links.lidWorden}>{t.lidWorden}</a>
+      <button class="knop knop--rand knop--icoon menuknop" type="button" data-open-menu aria-label={t.menu} aria-controls="mobiel-menu">
+        <Icoon naam="menu" grootte={20} />
+      </button>
+    </div>
+  </div>
+
+  {
+    secties.map(
+      (s: any, i: number) =>
+        s.kinderen?.length > 0 && (
+          <div class="paneel" id={`paneel-${i}`} data-paneel-inhoud>
+            <div class="omhulsel paneel__raster">
+              <div class="paneel__intro">
+                <h2>
+                  <span class="hubkaart__icoon">
+                    <Icoon naam={icoonVoor(s.pad)} grootte={22} />
+                  </span>
+                  {s.titel}
+                </h2>
+                {beschrijvingVan(s) && <p>{beschrijvingVan(s)}</p>}
+                {s.link?.pad && (
+                  <a class="pijllink" href={s.link.href}>
+                    {t.naarSectie} {s.titel}
+                    <Icoon naam="arrowRight" grootte={18} />
+                  </a>
+                )}
+                {isActiviteiten(s) && binnenkort.length > 0 && (
+                  <div class="paneel__binnenkort">
+                    <h3>{t.komendeActiviteiten}</h3>
+                    {binnenkort.map((a: any) => {
+                      const d = datumDelen(a.start, taal);
+                      return (
+                        <a class="minikaart" href={a.href}>
+                          <span class="datumtegel">
+                            <b>{d.dag}</b>
+                            <small>{d.maand}</small>
+                          </span>
+                          <span>
+                            <strong>{a.titel}</strong>
+                            <span>{[d.weekdag, tijdVak(a.start, a.eind, taal)].filter(Boolean).join(', ')}</span>
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <ul class="paneel__links">
+                {s.kinderen.map((k: any) => (
+                  <li>
+                    <a class="paneel__link" href={k.link?.href} rel={k.link?.extern ? 'noopener' : undefined}>
+                      {k.titel}
+                      {k.leden ? <Icoon naam="lock" grootte={15} /> : isNaarBuiten(k) ? <Icoon naam="external" grootte={15} /> : null}
+                    </a>
+                    {k.kinderen?.length > 0 && (
+                      <ul class="paneel__sub">
+                        {k.kinderen.map((kk: any) => (
+                          <li>
+                            <a href={kk.link?.href}>{kk.titel}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ),
+    )
+  }
+  {
+    secties.length > 4 && (
+      <div class="paneel" id="paneel-meer" data-paneel-inhoud>
+        <div class="omhulsel">
+          <ul class="paneel__links meer-lijst">
+            {secties.map((s: any, i: number) => (
+              <li class={plekVan(i)} data-sectie={i}>
+                <a class="paneel__link" href={s.link.href} rel={s.link.extern ? 'noopener' : undefined}>
+                  <span style="display:inline-flex;align-items:center;gap:10px">
+                    <Icoon naam={icoonVoor(s.pad ?? s.titel)} grootte={18} />
+                    {s.titel}
+                  </span>
+                  {isNaarBuiten(s) && <Icoon naam="external" grootte={15} />}
+                </a>
+                {s.kinderen?.length > 0 && (
+                  <ul class="paneel__sub">
+                    {s.kinderen.map((k: any) => (
+                      <li>
+                        <a href={k.link?.href}>{k.titel}</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    )
+  }
+</header>
+<div class="paneel-scherm" data-scherm></div>
+
+<dialog class="mobiel" id="mobiel-menu" aria-label={t.menu}>
+  <div class="mobiel__kop">
+    <a class="logo" href={links.home}>
+      <img src={`${basis}borstbeeld-rood.png`} alt="" width="30" height="32" />
+      <span class="logo__woord"><span class="logo__naam">CURIUS</span></span>
+    </a>
+    <button class="knop knop--rand knop--icoon" type="button" data-sluit-menu aria-label={t.sluiten}>
+      <Icoon naam="close" grootte={20} />
+    </button>
+  </div>
+  <div class="mobiel__binnen">
+    <button class="zoekknop" type="button" data-open-zoeken style="width:100%;justify-content:flex-start;padding:12px 16px">
+      <Icoon naam="search" grootte={18} />
+      {t.zoekPlaatsvervanger}
+    </button>
+    <ul class="mobiel__lijst">
+      {
+        secties.map((s: any) => (
+          <li>
+            {s.kinderen?.length ? (
+              <details open={sectieVan === s.pad}>
+                <summary class="mobiel__item">
+                  <Icoon naam={icoonVoor(s.pad)} grootte={20} />
+                  {s.titel}
+                  <Icoon naam="chevronDown" grootte={18} class="pijl" />
+                </summary>
+                <ul class="mobiel__sub">
+                  {s.link?.pad && (
+                    <li>
+                      <a href={s.link.href} aria-current={pagina?.pad === s.pad ? 'page' : undefined}>
+                        {t.overzicht}
+                      </a>
+                    </li>
+                  )}
+                  {s.kinderen.map((k: any) => (
+                    <li>
+                      <a href={k.link?.href} aria-current={pagina?.pad === k.pad ? 'page' : undefined}>
+                        {k.titel}
+                        {k.leden && <Icoon naam="lock" grootte={14} />}
+                      </a>
+                      {k.kinderen?.length > 0 && (
+                        <ul class="mobiel__sub">
+                          {k.kinderen.map((kk: any) => (
+                            <li>
+                              <a href={kk.link?.href} aria-current={pagina?.pad === kk.pad ? 'page' : undefined}>
+                                {kk.titel}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <a class="mobiel__item" href={s.link.href} rel={s.link.extern ? 'noopener' : undefined}>
+                <Icoon naam={icoonVoor(s.pad ?? s.titel)} grootte={20} />
+                {s.titel}
+                {s.link.extern && <Icoon naam="external" grootte={16} class="pijl" />}
+              </a>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+    <div class="mobiel__knoppen">
+      <a class="knop knop--rand" href={links.leden}><Icoon naam="login" grootte={18} />{t.mijnCurius}</a>
+      <a class="knop knop--primair" href={links.lidWorden}>{t.lidWorden}</a>
+    </div>
+    <a class="taalknop" href={ander} hreflang={taal === 'nl' ? 'en' : 'nl'} style="justify-self:center">
+      <Icoon naam="globe" grootte={18} />{t.taal}
+    </a>
+  </div>
+</dialog>
+
+<script>
+  const kop = document.querySelector<HTMLElement>('[data-kop]')!;
+  const scherm = document.querySelector<HTMLElement>('[data-scherm]')!;
+  const knoppen = [...kop.querySelectorAll<HTMLButtonElement>('[data-paneel]')];
+  let open: HTMLButtonElement | null = null;
+  let sluitTimer: number | undefined;
+  let openTimer: number | undefined;
+
+  function sluit() {
+    if (!open) return;
+    open.setAttribute('aria-expanded', 'false');
+    document.getElementById(open.dataset.paneel!)?.removeAttribute('data-open');
+    scherm.removeAttribute('data-open');
+    open = null;
+  }
+
+  function openPaneel(knop: HTMLButtonElement) {
+    if (open === knop) return;
+    sluit();
+    open = knop;
+    knop.setAttribute('aria-expanded', 'true');
+    document.getElementById(knop.dataset.paneel!)?.setAttribute('data-open', '');
+    scherm.setAttribute('data-open', '');
+  }
+
+  for (const knop of knoppen) {
+    knop.addEventListener('click', () => (open === knop ? sluit() : openPaneel(knop)));
+  }
+
+  // Met een muis opent het menu ook bij het eroverheen bewegen, met een kleine vertraging
+  // zodat het niet openklapt als je er alleen langs beweegt.
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    for (const knop of knoppen) {
+      knop.addEventListener('mouseenter', () => {
+        clearTimeout(sluitTimer);
+        clearTimeout(openTimer);
+        openTimer = window.setTimeout(() => openPaneel(knop), open ? 0 : 140);
+      });
+      knop.addEventListener('mouseleave', () => clearTimeout(openTimer));
+    }
+    kop.addEventListener('mouseleave', () => {
+      clearTimeout(openTimer);
+      sluitTimer = window.setTimeout(sluit, 260);
+    });
+    kop.addEventListener('mouseenter', () => clearTimeout(sluitTimer));
+  }
+
+  scherm.addEventListener('click', sluit);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && open) {
+      const knop = open;
+      sluit();
+      knop.focus();
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (open && !kop.contains(e.target as Node)) sluit();
+  });
+  matchMedia('(max-width: 1100px)').addEventListener('change', sluit);
+
+  // Zoveel mogelijk onderdelen naast elkaar in de kop; wat niet past staat onder Meer.
+  // Zo blijft het kloppen als er in Genkgo een onderdeel bijkomt of een naam langer wordt.
+  const lijst = kop.querySelector<HTMLElement>('.hoofdmenu');
+  const meer = lijst?.querySelector<HTMLElement>(':scope > li.meer');
+  if (lijst && meer) {
+    const items = [...lijst.querySelectorAll<HTMLElement>(':scope > li[data-sectie]')];
+    const inMeer = [...kop.querySelectorAll<HTMLElement>('.meer-lijst > li[data-sectie]')];
+    const meerKnop = meer.querySelector('button')!;
+    const zichtbaar = (li: HTMLElement) => li.style.display !== 'none';
+    const past = () => {
+      const laatste = [...items, meer].filter(zichtbaar).at(-1)!;
+      return laatste.getBoundingClientRect().right <= lijst.getBoundingClientRect().right + 0.5;
+    };
+    const verdeel = () => {
+      if (getComputedStyle(lijst).display === 'none') return;
+      for (const li of items) li.style.display = 'block';
+      meer.style.display = 'none';
+      let aantal = items.length;
+      if (!past()) {
+        meer.style.display = 'block';
+        while (aantal > 1 && !past()) items[--aantal].style.display = 'none';
+      }
+      inMeer.forEach((li, i) => (li.style.display = i < aantal ? 'none' : 'block'));
+      const actiefInMeer = items.slice(aantal).some((li) => li.querySelector('[aria-current="true"]'));
+      if (actiefInMeer) meerKnop.setAttribute('aria-current', 'true');
+      else meerKnop.removeAttribute('aria-current');
+      if (open && !zichtbaar(open.closest('li')!)) sluit();
+    };
+    new ResizeObserver(verdeel).observe(lijst);
+    document.fonts?.ready.then(verdeel);
+  }
+
+  // Mobiel menu
+  const mobiel = document.getElementById('mobiel-menu') as HTMLDialogElement;
+  document.querySelector('[data-open-menu]')?.addEventListener('click', () => mobiel.showModal());
+  mobiel.querySelector('[data-sluit-menu]')?.addEventListener('click', () => mobiel.close());
+  mobiel.addEventListener('click', (e) => {
+    if (e.target === mobiel) mobiel.close();
+  });
+  mobiel.querySelectorAll('[data-open-zoeken]').forEach((k) => k.addEventListener('click', () => mobiel.close()));
+</script>

@@ -1,0 +1,38 @@
+---
+// Een blok om de agenda van Curius in je eigen kalender te zetten.
+import Icoon from './Icoon.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  taal: 'nl' | 'en';
+  feed: string;
+}
+const { taal, feed } = Astro.props;
+const t = teksten(taal);
+---
+
+<div class="abonneren" data-pagefind-ignore>
+  <span class="abonneren__icoon"><Icoon naam="calendarPlus" grootte={24} /></span>
+  <div>
+    <strong>{t.agendaAbonneren}</strong>
+    <p>{t.agendaAbonnerenUitleg}</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;flex:0 1 auto">
+    <a class="knop knop--zacht knop--klein" href={feed} data-webcal>
+      <Icoon naam="calendarPlus" grootte={17} />Apple / Outlook
+    </a>
+    <a class="knop knop--rand knop--klein" href={feed} data-google rel="noopener">Google</a>
+  </div>
+</div>
+
+<script>
+  // Een webcal link opent op een telefoon of computer direct de agenda als abonnement.
+  document.querySelectorAll<HTMLAnchorElement>('[data-webcal]').forEach((a) => {
+    const url = new URL(a.getAttribute('href')!, location.href);
+    a.href = 'webcal://' + url.host + url.pathname;
+  });
+  document.querySelectorAll<HTMLAnchorElement>('[data-google]').forEach((a) => {
+    const url = new URL(a.getAttribute('href')!, location.href);
+    a.href = 'https://calendar.google.com/calendar/r?cid=' + encodeURIComponent('webcal://' + url.host + url.pathname);
+  });
+</script>

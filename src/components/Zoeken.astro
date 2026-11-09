@@ -1,0 +1,143 @@
+---
+// Zoeken over de hele site, met Pagefind: een zoekindex die bij het bouwen wordt
+// gemaakt en helemaal in de browser werkt (geen server nodig).
+import Icoon from './Icoon.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+}
+const { site, taal } = Astro.props;
+const t = teksten(taal);
+---
+
+<dialog
+  class="zoekvenster"
+  id="zoekvenster"
+  aria-label={t.zoeken}
+  data-basis={site.basis}
+  data-leeg={t.zoekLeeg}
+  data-geen={t.zoekGeen}
+  data-niet={t.zoekNietBeschikbaar}
+>
+  <div class="zoekvenster__veld">
+    <Icoon naam="search" grootte={22} />
+    <input type="search" placeholder={t.zoekPlaatsvervanger} aria-label={t.zoeken} autocomplete="off" spellcheck="false" />
+    <button class="knop knop--rand knop--icoon" type="button" data-sluit-zoeken aria-label={t.sluiten}>
+      <Icoon naam="close" grootte={18} />
+    </button>
+  </div>
+  <div class="zoekvenster__resultaten" role="listbox" aria-label={t.zoeken}>
+    <p class="zoekvenster__melding">{t.zoekLeeg}</p>
+  </div>
+</dialog>
+
+<script>
+  type Resultaat = { url: string; excerpt: string; meta: { title?: string; sectie?: string } };
+
+  const venster = document.getElementById('zoekvenster') as HTMLDialogElement;
+  const invoer = venster.querySelector('input')!;
+  const lijst = venster.querySelector<HTMLElement>('.zoekvenster__resultaten')!;
+  const { basis = '/', leeg = '', geen = '', niet = '' } = venster.dataset;
+  let pagefind: any;
+  let teller = 0;
+  let geselecteerd = -1;
+
+  const melding = (tekst: string) => {
+    lijst.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'zoekvenster__melding';
+    p.textContent = tekst;
+    lijst.append(p);
+  };
+
+  async function laad() {
+    if (pagefind !== undefined) return pagefind;
+    try {
+      const url = `${basis}pagefind/pagefind.js`;
+      pagefind = await import(/* @vite-ignore */ url);
+      // Lange pagina's minder straffen, zodat bijvoorbeeld "Huidig bestuur" boven de oude besturen komt.
+      await pagefind.options({ baseUrl: basis, excerptLength: 22, ranking: { pageLength: 0.3 } });
+      await pagefind.init();
+    } catch {
+      pagefind = null;
+    }
+    return pagefind;
+  }
+
+  async function zoek() {
+    const vraag = invoer.value.trim();
+    const nummer = ++teller;
+    if (!vraag) return melding(leeg);
+    const pf = await laad();
+    if (!pf) return melding(niet);
+    const uitkomst = await pf.debouncedSearch(vraag, {}, 120);
+    if (uitkomst === null || nummer !== teller) return;
+    const data: Resultaat[] = await Promise.all(uitkomst.results.slice(0, 10).map((r: any) => r.data()));
+    if (nummer !== teller) return;
+    if (!data.length) return melding(`${geen} “${vraag}”`);
+    lijst.innerHTML = '';
+    geselecteerd = -1;
+    for (const r of data) {
+      const a = document.createElement('a');
+      a.className = 'zoekresultaat';
+      a.href = r.url;
+      a.setAttribute('role', 'option');
+      if (r.meta.sectie) {
+        const s = document.createElement('small');
+        s.textContent = r.meta.sectie;
+        a.append(s);
+      }
+      const titel = document.createElement('strong');
+      titel.textContent = r.meta.title ?? r.url;
+      const p = document.createElement('p');
+      p.innerHTML = r.excerpt; // Pagefind levert alleen tekst met <mark> eromheen.
+      a.append(titel, p);
+      lijst.append(a);
+    }
+  }
+
+  function kies(stap: number) {
+    const items = [...lijst.querySelectorAll<HTMLAnchorElement>('.zoekresultaat')];
+    if (!items.length) return;
+    geselecteerd = (geselecteerd + stap + items.length) % items.length;
+    items.forEach((el, i) => el.setAttribute('aria-selected', String(i === geselecteerd)));
+    items[geselecteerd].scrollIntoView({ block: 'nearest' });
+  }
+
+  function open() {
+    if (!venster.open) venster.showModal();
+    invoer.focus();
+    invoer.select();
+    laad();
+  }
+
+  invoer.addEventListener('input', zoek);
+  invoer.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      kies(1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      kies(-1);
+    } else if (e.key === 'Enter') {
+      const items = lijst.querySelectorAll<HTMLAnchorElement>('.zoekresultaat');
+      const doel = items[Math.max(geselecteerd, 0)];
+      if (doel) location.href = doel.href;
+    }
+  });
+  venster.querySelector('[data-sluit-zoeken]')?.addEventListener('click', () => venster.close());
+  venster.addEventListener('click', (e) => {
+    if (e.target === venster) venster.close();
+  });
+  document.querySelectorAll('[data-open-zoeken]').forEach((knop) => knop.addEventListener('click', open));
+  document.addEventListener('keydown', (e) => {
+    const doel = e.target as HTMLElement;
+    const typt = doel.closest('input, textarea, select, [contenteditable]');
+    if ((e.key === '/' && !typt) || (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey))) {
+      e.preventDefault();
+      open();
+    }
+  });
+</script>

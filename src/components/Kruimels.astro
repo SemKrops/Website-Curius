@@ -1,0 +1,31 @@
+---
+import Icoon from './Icoon.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  kruimels: { titel: string; href: string }[];
+  titel: string;
+}
+const { site, taal, kruimels = [], titel } = Astro.props;
+const t = teksten(taal);
+---
+
+<nav class="kruimels" aria-label="Kruimelpad">
+  <ol>
+    <li><a href={site.links[taal].home}>{t.home}</a></li>
+    {
+      kruimels.map((k) => (
+        <li>
+          <Icoon naam="chevronRight" grootte={14} />
+          <a href={k.href}>{k.titel}</a>
+        </li>
+      ))
+    }
+    <li aria-current="page">
+      <Icoon naam="chevronRight" grootte={14} />
+      <span>{titel}</span>
+    </li>
+  </ol>
+</nav>

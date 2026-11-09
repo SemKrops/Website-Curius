@@ -1,0 +1,23 @@
+---
+import Basis from '../layouts/Basis.astro';
+import Icoon from '../components/Icoon.astro';
+import { haalSite } from '../lib/site.mjs';
+import { t as teksten } from '../lib/teksten.mjs';
+
+const site = await haalSite();
+const t = teksten('nl');
+const en = teksten('en');
+---
+
+<Basis site={site} taal="nl" titel={t.nietGevonden} zoekbaar={false}>
+  <section class="omhulsel nietgevonden">
+    <img src={`${site.basis}borstbeeld-rood.png`} alt="" />
+    <h1>{t.nietGevonden}</h1>
+    <p>{t.nietGevondenTekst}<br /><span lang="en">{en.nietGevonden}. {en.nietGevondenTekst}</span></p>
+    <div class="hero__knoppen">
+      <button class="knop knop--rand" type="button" data-open-zoeken><Icoon naam="search" grootte={18} />{t.zoeken}</button>
+      <a class="knop knop--primair" href={site.links.nl.home}>{t.naarHome}</a>
+      <a class="knop knop--zacht" href={site.links.en.home} lang="en">{en.naarHome}</a>
+    </div>
+  </section>
+</Basis>

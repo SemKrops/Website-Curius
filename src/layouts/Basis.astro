@@ -1,0 +1,64 @@
+---
+// Het raamwerk van elke pagina: kop, inhoud, voet en zoeken.
+import '@fontsource-variable/inter';
+import '@fontsource/lora/600.css';
+import '@fontsource/lora/700.css';
+import '../styles/basis.css';
+import Kop from '../components/Kop.astro';
+import Voet from '../components/Voet.astro';
+import Zoeken from '../components/Zoeken.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  titel?: string;
+  beschrijving?: string;
+  afbeelding?: string;
+  pagina?: any;
+  zoekbaar?: boolean;
+  sectieTitel?: string;
+}
+const { site, taal, titel, beschrijving, afbeelding, pagina, zoekbaar = true, sectieTitel } = Astro.props;
+const t = teksten(taal);
+const volledigeTitel = titel ? `${titel} | Curius` : `Curius | ${t.ondertitel}`;
+const ander = pagina?.ander;
+const anderTaal = taal === 'nl' ? 'en' : 'nl';
+const canoniek = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const og = afbeelding ?? (Astro.site ? new URL(`${site.basis}logo-curius.png`, Astro.site).href : undefined);
+---
+
+<!doctype html>
+<html lang={taal} style={`--borstbeeld: url(${site.basis}borstbeeld-wit.png)`}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      // Een paar afbeeldingen ontbreken op de oude site. Die markeren we, zodat de CSS er
+      // een nette lege plek van maakt in plaats van een kapot plaatje.
+      addEventListener('error', (e) => e.target instanceof HTMLImageElement && e.target.setAttribute('data-kapot', ''), true);
+    </script>
+    <title>{volledigeTitel}</title>
+    {beschrijving && <meta name="description" content={beschrijving} />}
+    <meta name="theme-color" content="#98012e" />
+    <link rel="icon" type="image/png" href={`${site.basis}favicon.png`} />
+    <link rel="apple-touch-icon" href={`${site.basis}borstbeeld-rood.png`} />
+    {canoniek && <link rel="canonical" href={canoniek} />}
+    {ander && Astro.site && <link rel="alternate" hreflang={anderTaal} href={new URL(ander, Astro.site).href} />}
+    <link rel="alternate" type="text/calendar" title="Curius agenda" href={site.links[taal].agendaFeed} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Curius" />
+    <meta property="og:title" content={titel ?? 'Curius'} />
+    {beschrijving && <meta property="og:description" content={beschrijving} />}
+    {og && <meta property="og:image" content={og} />}
+    <meta property="og:locale" content={taal === 'nl' ? 'nl_NL' : 'en_GB'} />
+  </head>
+  <body>
+    <Kop site={site} taal={taal} pagina={pagina} />
+    <main id="inhoud" data-pagefind-body={zoekbaar ? '' : undefined} data-pagefind-meta={sectieTitel ? `sectie:${sectieTitel}` : undefined}>
+      <slot />
+    </main>
+    <Voet site={site} taal={taal} />
+    <Zoeken site={site} taal={taal} />
+  </body>
+</html>

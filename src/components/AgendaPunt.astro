@@ -1,0 +1,36 @@
+---
+import Icoon from './Icoon.astro';
+import { datumDelen, tijdVak } from '../bron/datum.mjs';
+import { t as teksten } from '../lib/teksten.mjs';
+import { soortLabel } from '../lib/vorm.mjs';
+
+interface Props {
+  a: any;
+  taal: 'nl' | 'en';
+  voorbij?: boolean;
+}
+const { a, taal, voorbij = false } = Astro.props;
+const t = teksten(taal);
+const d = datumDelen(a.start, taal);
+const label = soortLabel(a.soort ?? a.categorie, taal);
+const tijd = tijdVak(a.start, a.eind, taal);
+---
+
+<li class:list={['agendapunt', voorbij && 'agendapunt--voorbij']} data-tot={voorbij ? undefined : (a.eind ?? a.start)}>
+  <span class="datumtegel"><small>{d.weekdag}</small><b>{d.dag}</b><small>{d.maand}</small></span>
+  <div>
+    <h4><a href={a.href}>{a.titel}</a></h4>
+    <div class="agendapunt__meta">
+      {tijd && <span><Icoon naam="clock" grootte={15} />{tijd}</span>}
+      {a.locatie && <span><Icoon naam="pin" grootte={15} />{a.locatie}</span>}
+    </div>
+  </div>
+  {
+    (label || (!voorbij && a.inschrijvingOpen)) && (
+      <div class="agendapunt__labels">
+        {!voorbij && a.inschrijvingOpen && <span class="label label--open">{t.inschrijvingOpen}</span>}
+        {label && <span class:list={['label', label.klasse]}>{label.tekst}</span>}
+      </div>
+    )
+  }
+</li>

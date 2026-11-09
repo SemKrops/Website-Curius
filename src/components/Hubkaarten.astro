@@ -1,0 +1,32 @@
+---
+// De onderliggende pagina's van een onderdeel, als kaarten.
+import Icoon from './Icoon.astro';
+import { icoonVoor, t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  kinderen: any[];
+  taal: 'nl' | 'en';
+  /** Op een telefoon twee kleine kaarten naast elkaar, zonder samenvatting. */
+  compact?: boolean;
+}
+const { kinderen, taal, compact = false } = Astro.props;
+const t = teksten(taal);
+---
+
+<div class:list={['hubkaarten', compact && 'hubkaarten--compact']} data-pagefind-ignore>
+  {
+    kinderen.map((k) => (
+      <a class="hubkaart" href={k.href} rel={k.extern ? 'noopener' : undefined}>
+        <span class="hubkaart__icoon">
+          <Icoon naam={k.leden ? 'lock' : icoonVoor(k.href + ' ' + k.titel)} grootte={21} />
+        </span>
+        <h3>{k.titel}</h3>
+        {k.leden ? <p>{t.alleenLeden}</p> : k.samenvatting && <p>{k.samenvatting}</p>}
+        <span class="hubkaart__voet">
+          <span>{k.aantal ? `${k.aantal} ${t.pagina}` : k.extern ? new URL(k.href).host.replace(/^www\./, '') : t.bekijk}</span>
+          <Icoon naam={k.extern ? 'external' : 'arrowRight'} grootte={18} />
+        </span>
+      </a>
+    ))
+  }
+</div>

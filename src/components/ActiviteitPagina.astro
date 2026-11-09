@@ -1,0 +1,163 @@
+---
+// De pagina van één activiteit: poster, wanneer en waar, inschrijven en de beschrijving.
+import Basis from '../layouts/Basis.astro';
+import Blokken from './Blokken.astro';
+import Icoon from './Icoon.astro';
+import Kruimels from './Kruimels.astro';
+import { dagSleutel, datumLang, periode, tijdVak } from '../bron/datum.mjs';
+import { t as teksten } from '../lib/teksten.mjs';
+import { isToekomst, soortLabel } from '../lib/vorm.mjs';
+
+interface Props {
+  site: any;
+  pagina: any;
+}
+const { site, pagina } = Astro.props;
+const taal = pagina.taal;
+const t = teksten(taal);
+const a = pagina.activiteit ?? {};
+const komend = a.start ? isToekomst(a) : false;
+const label = soortLabel(a.soort ?? a.categorie, taal);
+const meerdereDagen = a.start && a.eind && dagSleutel(a.start) !== dagSleutel(a.eind);
+const wanneer = a.start
+  ? meerdereDagen
+    ? periode(a.start, a.eind, taal)
+    : [datumLang(a.start, taal), tijdVak(a.start, a.eind, taal)].filter(Boolean).join(', ')
+  : undefined;
+const sectieTitel = site.talen[taal].menu.find((k: any) => k.pad === pagina.sectie)?.titel;
+const agendaGegevens = a.start
+  ? JSON.stringify({ id: a.id, titel: a.titel ?? pagina.titel, start: a.start, eind: a.eind, locatie: a.locatie, samenvatting: a.samenvatting })
+  : undefined;
+---
+
+<Basis
+  site={site}
+  taal={taal}
+  titel={pagina.titel}
+  beschrijving={pagina.beschrijving ?? a.samenvatting}
+  afbeelding={a.poster}
+  pagina={pagina}
+  sectieTitel={sectieTitel}
+>
+  <header class="paginakop">
+    <div class="omhulsel">
+      <Kruimels site={site} taal={taal} kruimels={pagina.kruimels} titel={pagina.titel} />
+      {
+        (label || (komend && a.inschrijvingOpen)) && (
+          <div class="paginakop__labels">
+            {komend && a.inschrijvingOpen && <span class="label label--open">{t.inschrijvingOpen}</span>}
+            {label && <span class:list={['label', label.klasse]}>{label.tekst}</span>}
+          </div>
+        )
+      }
+      <h1>{pagina.titel}</h1>
+    </div>
+  </header>
+
+  <div class="inhoud">
+    <div class:list={['omhulsel', a.poster ? 'activiteit' : 'inhoud-raster inhoud-raster--zonder']}>
+      {
+        a.poster && (
+          <div class="activiteit__poster">
+            <img src={a.poster} alt={pagina.titel} />
+          </div>
+        )
+      }
+      <div>
+        <div class="infokaart">
+          <dl>
+            {
+              wanneer && (
+                <div class="infokaart__rij">
+                  <Icoon naam="calendar" grootte={20} />
+                  <div>
+                    <dt>{t.wanneer}</dt>
+                    <dd>{wanneer}</dd>
+                  </div>
+                </div>
+              )
+            }
+            {
+              a.locatie && (
+                <div class="infokaart__rij">
+                  <Icoon naam="pin" grootte={20} />
+                  <div>
+                    <dt>{t.waar}</dt>
+                    <dd>{a.locatie}</dd>
+                  </div>
+                </div>
+              )
+            }
+            {
+              a.organisator && (
+                <div class="infokaart__rij">
+                  <Icoon naam="users" grootte={20} />
+                  <div>
+                    <dt>{t.organisatie}</dt>
+                    <dd>{a.organisator}</dd>
+                  </div>
+                </div>
+              )
+            }
+          </dl>
+        </div>
+
+        <div class="inschrijfblok" data-pagefind-ignore>
+          {
+            komend && a.kanInschrijven !== false && (
+              <a class="knop knop--primair" href={a.inschrijfLink ?? pagina.bron}>
+                {t.inschrijven}
+                <Icoon naam="external" grootte={17} />
+              </a>
+            )
+          }
+          {
+            komend && agendaGegevens && (
+              <button class="knop knop--rand" type="button" data-zet-in-agenda={agendaGegevens}>
+                <Icoon naam="calendarPlus" grootte={18} />
+                {t.inAgenda}
+              </button>
+            )
+          }
+          <button class="knop knop--rand" type="button" data-delen hidden>
+            <Icoon naam="link" grootte={18} />
+            {taal === 'nl' ? 'Delen' : 'Share'}
+          </button>
+        </div>
+        {
+          komend && a.kanInschrijven !== false && (
+            <p class="inschrijfuitleg" data-pagefind-ignore>
+              <Icoon naam="lock" grootte={16} />
+              {t.inschrijvenUitleg}
+            </p>
+          )
+        }
+
+        <Blokken site={site} taal={taal} pagina={pagina} />
+      </div>
+    </div>
+  </div>
+</Basis>
+
+<script>
+  import { evenement } from '../lib/ics.mjs';
+
+  document.querySelectorAll<HTMLButtonElement>('[data-zet-in-agenda]').forEach((knop) => {
+    knop.addEventListener('click', () => {
+      const a = JSON.parse(knop.dataset.zetInAgenda!);
+      const inhoud = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Curius//Website//NL', evenement(a, { url: location.href }), 'END:VCALENDAR', ''].join('\r\n');
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([inhoud], { type: 'text/calendar' }));
+      link.download = `${a.titel.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').toLowerCase() || 'activiteit'}.ics`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+    });
+  });
+
+  // Delen via WhatsApp en andere apps, op telefoons die dat kunnen.
+  document.querySelectorAll<HTMLButtonElement>('[data-delen]').forEach((knop) => {
+    if (!navigator.share) return;
+    knop.hidden = false;
+    knop.addEventListener('click', () => navigator.share({ title: document.title, url: location.href }).catch(() => {}));
+  });
+</script>

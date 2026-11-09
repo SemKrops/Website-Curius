@@ -1,0 +1,27 @@
+---
+// Een gewone kaart: een commissie, nieuwsbericht of iets anders met een plaatje.
+interface Props {
+  kaart: any;
+  basis: string;
+}
+const { kaart, basis } = Astro.props;
+---
+
+<article class="kaart">
+  <div class="kaart__beeld">
+    {
+      kaart.afbeelding ? (
+        <img src={kaart.afbeelding} srcset={kaart.srcset} sizes="(min-width: 1200px) 380px, 92vw" alt="" loading="lazy" decoding="async" />
+      ) : (
+        <div class="kaart__leeg">
+          <img src={`${basis}borstbeeld-wit.png`} alt="" loading="lazy" />
+        </div>
+      )
+    }
+  </div>
+  <div class="kaart__body">
+    <h3 class="kaart__titel"><a href={kaart.href}>{kaart.titel}</a></h3>
+    {kaart.ondertitel && <div class="kaart__meta"><span>{kaart.ondertitel}</span></div>}
+    {kaart.voet && <div class="kaart__voet"><span class="label label--grijs">{kaart.voet}</span></div>}
+  </div>
+</article>

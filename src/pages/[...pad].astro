@@ -1,0 +1,26 @@
+---
+// Elke pagina van de site: dezelfde adressen als op de oude site, zodat oude
+// links (en QR codes op posters) blijven werken.
+import ActiviteitPagina from '../components/ActiviteitPagina.astro';
+import Home from '../components/Home.astro';
+import InhoudPagina from '../components/InhoudPagina.astro';
+import { haalSite } from '../lib/site.mjs';
+
+export async function getStaticPaths() {
+  const site = await haalSite();
+  return Object.keys(site.paginas).map((pad) => ({ params: { pad }, props: { pad } }));
+}
+
+const site = await haalSite();
+const pagina = site.paginas[Astro.props.pad];
+---
+
+{
+  pagina.soort === 'home' ? (
+    <Home site={site} pagina={pagina} />
+  ) : pagina.soort === 'activiteit' ? (
+    <ActiviteitPagina site={site} pagina={pagina} />
+  ) : (
+    <InhoudPagina site={site} pagina={pagina} />
+  )
+}

@@ -1,0 +1,118 @@
+---
+// Onderaan elke pagina: partners, contactgegevens, alle onderdelen en sociale media.
+import Icoon from './Icoon.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+}
+const { site, taal } = Astro.props;
+const t = teksten(taal);
+const { contact, sociaal, partners, menu } = site.talen[taal];
+const links = site.links[taal];
+const basis = site.basis;
+
+const ICONEN: Record<string, string> = { instagram: 'instagram', facebook: 'facebook', linkedin: 'linkedin', whatsapp: 'whatsapp' };
+const sociaalMetIcoon = sociaal
+  // Een link naar alleen de homepagina van WhatsApp leidt nergens heen.
+  .filter((s: any) => !/^https?:\/\/(www\.)?whatsapp\.com\/?$/i.test(s.href))
+  .map((s: any) => ({ ...s, icoon: ICONEN[s.naam.toLowerCase()] ?? 'globe' }));
+const kolommen = menu.filter((k: any) => !k.leden && k.kinderen?.length);
+const losse = menu.filter((k: any) => !k.leden && !k.kinderen?.length && k.link);
+const telefoon = contact.telefoon?.replace(/[^\d+]/g, '');
+const bijgewerkt = new Intl.DateTimeFormat(taal === 'nl' ? 'nl-NL' : 'en-GB', {
+  timeZone: 'Europe/Amsterdam',
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+}).format(new Date(site.gemaakt));
+---
+
+{
+  partners.length > 0 && (
+    <section class="blok blok--wit" aria-labelledby="partners-kop" data-pagefind-ignore>
+      <div class="omhulsel">
+        <div class="blokkop">
+          <div>
+            <h2 id="partners-kop">{t.partners}</h2>
+            <p>{t.partnersTekst}</p>
+          </div>
+        </div>
+        <div class="partners">
+          {partners.map((p: any) => (
+            <a class="partner" href={p.href} title={p.naam} rel="noopener">
+              <img src={p.logo} alt={p.naam} loading="lazy" decoding="async" />
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<footer class="voet" data-pagefind-ignore>
+  <div class="omhulsel voet__raster">
+    <div class="voet__merk">
+      <img src={`${basis}borstbeeld-wit.png`} alt="" width="54" height="57" loading="lazy" />
+      <span class="voet__naam">CURIUS</span>
+      <p>
+        S.V.T.B. Curius<br />
+        {contact.adres && <>{contact.adres}<br /></>}
+        {contact.postcode && <>{contact.postcode}<br /></>}
+        {contact.telefoon && <><a href={`tel:${telefoon}`}>{contact.telefoon}</a><br /></>}
+        {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
+      </p>
+      {
+        sociaalMetIcoon.length > 0 && (
+          <div class="voet__sociaal" aria-label={t.volgOns}>
+            {sociaalMetIcoon.map((s: any) => (
+              <a href={s.href} rel="noopener" aria-label={s.naam} title={s.naam}>
+                <Icoon naam={s.icoon} grootte={18} />
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
+    <div class="voet__kolommen">
+      {
+        kolommen.map((k: any) => (
+          <div>
+            <h3>{k.titel}</h3>
+            <ul>
+              {k.kinderen.slice(0, 7).map((kk: any) => (
+                <li>
+                  <a href={kk.link?.href}>{kk.titel}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+      <div>
+        <h3>Curius</h3>
+        <ul>
+          {
+            losse.map((k: any) => (
+              <li>
+                <a href={k.link.href}>{k.titel}</a>
+              </li>
+            ))
+          }
+          <li><a href={links.nieuws}>{t.nieuws}</a></li>
+          <li><a href={links.lidWorden}>{t.lidWorden}</a></li>
+          <li><a href={links.leden}>{t.mijnCurius}</a></li>
+          <li><a href={links.agendaFeed}>{t.agendaAbonneren}</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="omhulsel">
+    <div class="voet__onder">
+      <span>© {new Date(site.gemaakt).getFullYear()} S.V.T.B. Curius{contact.kvk && ` · ${t.kvk} ${contact.kvk}`}</span>
+      <span>{t.bijgewerkt}: {bijgewerkt}</span>
+    </div>
+  </div>
+</footer>

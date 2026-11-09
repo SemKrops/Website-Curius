@@ -1,0 +1,24 @@
+---
+// De voordeur: stuurt door naar de Nederlandse of Engelse site, afhankelijk van de taal van de browser.
+const basis = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
+---
+
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Curius</title>
+    <meta name="theme-color" content="#98012e" />
+    <link rel="icon" type="image/png" href={`${basis}favicon.png`} />
+    <noscript><meta http-equiv="refresh" content={`0; url=${basis}nl/`} /></noscript>
+    <script is:inline define:vars={{ basis }}>
+      var talen = navigator.languages || [navigator.language || 'nl'];
+      var nl = talen.some(function (t) { return /^nl/i.test(t); });
+      location.replace(basis + (nl ? 'nl/' : 'en/'));
+    </script>
+  </head>
+  <body style="font-family:system-ui;text-align:center;padding:64px 16px">
+    <p><a href={`${basis}nl/`}>Nederlands</a> · <a href={`${basis}en/`}>English</a></p>
+  </body>
+</html>

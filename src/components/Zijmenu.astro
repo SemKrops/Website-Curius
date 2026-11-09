@@ -1,0 +1,51 @@
+---
+// Het menu van het onderdeel waar de pagina in staat, naast de inhoud.
+import Icoon from './Icoon.astro';
+import { icoonVoor, t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  pagina: any;
+}
+const { site, taal, pagina } = Astro.props;
+const t = teksten(taal);
+const sectie = site.talen[taal].menu.find((k: any) => k.pad && k.pad === pagina.sectie);
+// Actief: de pagina zelf, of op een detailpagina (zoals een activiteit) de pagina waar hij onder valt.
+const huidig = (k: any) => k.pad === pagina.pad || (pagina.kruimels ?? []).some((kr: any) => kr.href === k.link?.href && k.pad !== pagina.sectie);
+const isNaarBuiten = (k: any) => k.link?.extern || k.link?.oud;
+---
+
+{
+  sectie && sectie.kinderen?.length > 0 && (
+    <>
+      <nav class="zijmenu" aria-label={t.inDezeSectie} data-pagefind-ignore>
+        <a class="zijmenu__kop" href={sectie.link?.href} aria-current={pagina.pad === sectie.pad ? 'page' : undefined}>
+          <Icoon naam={icoonVoor(sectie.pad)} grootte={20} />
+          {sectie.titel}
+        </a>
+        <ul>
+          {sectie.kinderen.map((k: any) => (
+            <li>
+              <a href={k.link?.href} aria-current={huidig(k) ? 'page' : undefined}>
+                {k.titel}
+                {k.leden ? <Icoon naam="lock" grootte={14} /> : isNaarBuiten(k) ? <Icoon naam="external" grootte={14} /> : null}
+              </a>
+              {k.kinderen?.length > 0 && (
+                <ul>
+                  {k.kinderen.map((kk: any) => (
+                    <li>
+                      <a href={kk.link?.href} aria-current={huidig(kk) ? 'page' : undefined}>
+                        {kk.titel}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
+  )
+}

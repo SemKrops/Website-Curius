@@ -1,0 +1,147 @@
+---
+// Tekent de blokken van een pagina (tekst, kaarten, personen, ...) in de nieuwe stijl.
+import ActiviteitKaart from './ActiviteitKaart.astro';
+import Agenda from './Agenda.astro';
+import Icoon from './Icoon.astro';
+import Kaart from './Kaart.astro';
+import Vacatures from './Vacatures.astro';
+import { t as teksten } from '../lib/teksten.mjs';
+import { initialen } from '../lib/vorm.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  pagina: any;
+  blokken?: any[];
+}
+const { site, taal, pagina } = Astro.props;
+const blokken = Astro.props.blokken ?? pagina.blokken;
+const t = teksten(taal);
+const basis = site.basis;
+const activiteitOp = new Map(site.activiteiten[taal].map((a: any) => [a.pad, a]));
+const isActiviteitKaart = (k: any) => k.pad && activiteitOp.has(k.pad);
+---
+
+{
+  blokken.map((blok: any) => {
+    switch (blok.type) {
+      case 'html':
+        return <div class="tekst" set:html={blok.html} />;
+      case 'kop':
+        return <h2 style="font-size:1.5rem;margin:8px 0 -8px">{blok.tekst}</h2>;
+      case 'datum':
+        return (
+          <p class="datumregel">
+            <Icoon naam="calendar" grootte={16} />
+            {blok.tekst}
+          </p>
+        );
+      case 'afbeelding':
+        return (
+          <figure style="margin:0 0 24px">
+            <img src={blok.src} alt={blok.alt ?? ''} style="border-radius:var(--radius-m);max-width:min(100%,720px)" loading="lazy" />
+          </figure>
+        );
+      case 'logo':
+        return (
+          <div class="logoblok">
+            <img src={blok.src} alt={blok.alt ?? ''} loading="lazy" />
+          </div>
+        );
+      case 'gegevens':
+        return (
+          <dl class="gegevens">
+            {blok.rijen.map((r: any) => (
+              <>
+                <dt>{r.label}</dt>
+                <dd>{r.href ? <a href={r.href}>{r.waarde}</a> : r.waarde}</dd>
+              </>
+            ))}
+          </dl>
+        );
+      case 'kaarten': {
+        return (
+          <section>
+            {blok.titel && <h2 style="font-size:1.4rem;margin:0 0 16px">{blok.titel}</h2>}
+            <div class="kaarten kaarten--compact">
+              {blok.kaarten.map((k: any) =>
+                isActiviteitKaart(k) ? (
+                  <ActiviteitKaart activiteit={activiteitOp.get(k.pad)} taal={taal} basis={basis} />
+                ) : (
+                  <Kaart kaart={k} basis={basis} />
+                ),
+              )}
+            </div>
+          </section>
+        );
+      }
+      case 'personen':
+        return (
+          <div class="personen">
+            {blok.personen.map((p: any) => (
+              <figure class="persoon">
+                <div class="persoon__foto">
+                  <span class="persoon__letters" aria-hidden="true">
+                    {initialen(p.naam)}
+                  </span>
+                  {p.foto && <img src={p.foto} alt="" loading="lazy" decoding="async" />}
+                </div>
+                <figcaption>
+                  <strong>{p.naam}</strong>
+                  {p.rol && <span>{p.rol}</span>}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        );
+      case 'downloads':
+        return (
+          <div class="downloads">
+            {blok.items.map((d: any) => (
+              <a class="download" href={d.href} rel="noopener">
+                <div class="download__omslag">{d.afbeelding && <img src={d.afbeelding} alt="" loading="lazy" />}</div>
+                <span>
+                  <Icoon naam="download" grootte={17} />
+                  {d.titel}
+                </span>
+              </a>
+            ))}
+          </div>
+        );
+      case 'bedrijven':
+        return (
+          <div class="bedrijven">
+            {blok.bedrijven.map((b: any) => (
+              <a class="bedrijf" href={b.href}>
+                <div class="bedrijf__logo">{b.logo && <img src={b.logo} alt={b.naam} loading="lazy" />}</div>
+                <div class="bedrijf__body">
+                  <strong>{b.naam}</strong>
+                  {b.beschrijving && <p>{b.beschrijving}</p>}
+                </div>
+              </a>
+            ))}
+          </div>
+        );
+      case 'vacatures':
+        return <Vacatures vacatures={blok.vacatures} taal={taal} titel={blok.titel} />;
+      case 'agenda':
+        return <Agenda activiteiten={site.activiteiten[taal]} taal={taal} feed={site.links[taal].agendaFeed} />;
+      case 'formulier':
+        return (
+          <div class="melding">
+            <Icoon naam="file" grootte={24} />
+            <div>
+              <h3>{blok.titel || t.formulierKnop}</h3>
+              <p>{t.formulierTekst}</p>
+              <a class="knop knop--primair knop--klein" href={pagina.bron}>
+                {t.formulierKnop}
+                <Icoon naam="external" grootte={16} />
+              </a>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  })
+}
