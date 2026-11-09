@@ -4,7 +4,8 @@ De nieuwe website van S.V.T.B. Curius, de studievereniging van Technische Bestuu
 
 De inhoud blijft gewoon in Genkgo staan en wordt daar ook aangepast. Deze site haalt elk uur alles op van
 [curius.nl](https://www.curius.nl) en toont het in een nieuw ontwerp, met een overzichtelijk menu, zoeken over de
-hele site en een agenda die je in je eigen kalender kunt zetten.
+hele site en een agenda die je in je eigen kalender kunt zetten. Leden loggen in op de site zelf, via de server van
+de Curius app.
 
 ## Hoe het werkt
 
@@ -25,8 +26,28 @@ Pas de inhoud aan in Genkgo, zoals je gewend bent. Binnen een uur staat het op d
 
 Moet het sneller? Ga naar het tabblad **Actions**, kies **Website** en klik op **Run workflow**.
 
-Inloggen, Mijn Curius, inschrijven voor activiteiten en formulieren blijven in Genkgo. De knoppen daarvoor op de
-nieuwe site gaan naar de site in Genkgo.
+## Leden
+
+Leden loggen in op de nieuwe site met hun Curius account, net als in de app. Daarna kunnen ze:
+
+* zich inschrijven en uitschrijven op de pagina van een activiteit, en zien wie er nog meer gaan;
+* in **Mijn Curius** hun gegevens en pasfoto aanpassen, zien waar ze voor zijn ingeschreven, leden zoeken en een
+  declaratie indienen;
+* de fotoalbums bekijken (onder Media).
+
+Dit gaat allemaal via de server van de Curius app (de repository `studievereniging-curius`, map `server`). De
+website zelf is een gewone site zonder database: pas als iemand inlogt, haalt de browser de gegevens op bij die
+server. De browser bewaart alleen een sessie (een token), nooit het wachtwoord. De Genkgo API key staat alleen op de
+server.
+
+Goed om te weten:
+
+* **Staat de server uit,** dan zien leden bij inloggen een melding dat er geen verbinding is. De rest van de site
+  werkt gewoon.
+* **Verloopt de inlog op curius.nl** (bijvoorbeeld na een herstart van de server), dan vraagt de site het
+  wachtwoord nog een keer, net als de app.
+* **Formulieren** (lid worden, contact, wachtwoord vergeten) openen voorlopig nog op de site in Genkgo.
+* Op een computer zonder server kun je alles proberen met de proefserver, zie hieronder.
 
 ## Zelf draaien
 
@@ -43,6 +64,18 @@ npm run verzamel  # alleen de inhoud ophalen, met een overzicht van wat er gevon
 Tip voor tijdens het ontwikkelen: `BRON_CACHE_MINUTEN=120 npm run dev` gebruikt twee uur lang de bewaarde pagina's,
 zodat niet bij elke start alles opnieuw wordt opgehaald.
 
+### Inloggen proberen met de proefserver
+
+De proefserver doet alsof hij de server van de app is, met verzonnen leden. Er gaat niets naar Genkgo.
+
+```sh
+npm run proefserver                                  # in een eigen venster, op http://localhost:4400
+SERVER_URL=http://localhost:4400 npm run dev         # de site, met inloggen via de proefserver
+```
+
+Log in met gebruikersnaam `lid` en wachtwoord `curius`. Met `PROEF_SITE_VERLOPEN=1 npm run proefserver` doet hij
+alsof de inlog op curius.nl verlopen is, zodat je kunt zien dat de site dan het wachtwoord nog een keer vraagt.
+
 ## Instellingen
 
 Alles werkt zonder instellingen. Aanpassen kan met deze omgevingsvariabelen:
@@ -50,14 +83,15 @@ Alles werkt zonder instellingen. Aanpassen kan met deze omgevingsvariabelen:
 | Variabele            | Standaard               | Wat het doet                                                        |
 | -------------------- | ----------------------- | ------------------------------------------------------------------- |
 | `BRON_URL`           | `https://www.curius.nl` | De site in Genkgo waar de inhoud vandaan komt.                      |
-| `LEDEN_URL`          | gelijk aan `BRON_URL`   | Waar leden inloggen en zich inschrijven.                            |
+| `LEDEN_URL`          | gelijk aan `BRON_URL`   | Waar links heen gaan voor wat alleen in Genkgo werkt (formulieren). |
+| `SERVER_URL`         | de server van de app    | De Curius server waarmee leden inloggen (`https://curius.tailbb09ca.ts.net`). |
 | `SITE_URL`           | GitHub Pages            | Het adres van de nieuwe site (vult GitHub Actions zelf in).         |
 | `BASE_PATH`          | `/`                     | De map van de site op dat adres (vult GitHub Actions zelf in).      |
 | `BRON_CACHE_MINUTEN` | `0`                     | Hoe lang een bewaarde pagina gebruikt wordt zonder opnieuw te halen. |
 | `BRON_TEGELIJK`      | `4`                     | Hoeveel pagina's tegelijk worden opgehaald.                         |
 
-In GitHub zet je `BRON_URL` en `LEDEN_URL` bij **Settings**, **Secrets and variables**, **Actions**, tabblad
-**Variables**.
+In GitHub zet je `BRON_URL`, `LEDEN_URL` en `SERVER_URL` bij **Settings**, **Secrets and variables**, **Actions**,
+tabblad **Variables**. Krijgt de server van de app een ander adres, pas dan `SERVER_URL` aan.
 
 ## Overstappen naar www.curius.nl
 
@@ -85,7 +119,9 @@ De nieuwe site gebruikt dezelfde adressen als de oude, dus links van buitenaf bl
 | Map                 | Inhoud                                                        |
 | ------------------- | ------------------------------------------------------------- |
 | `src/bron`          | Ophalen en lezen van curius.nl                                |
-| `src/lib`           | Teksten, de agenda (`.ics`) en kleine hulpjes                 |
+| `src/lib`           | Teksten, de agenda (`.ics`), inloggen en kleine hulpjes       |
+| `src/lib/mijn`      | De pagina's van Mijn Curius (draaien in de browser)           |
+| `scripts`           | Inhoud ophalen en de proefserver                              |
 | `src/components`    | De onderdelen van het ontwerp: kop, menu, kaarten, voet       |
 | `src/pages`         | Welke pagina's er gemaakt worden                              |
 | `src/styles`        | Kleuren en opmaak                                             |

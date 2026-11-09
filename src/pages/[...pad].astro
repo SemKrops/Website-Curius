@@ -4,11 +4,15 @@
 import ActiviteitPagina from '../components/ActiviteitPagina.astro';
 import Home from '../components/Home.astro';
 import InhoudPagina from '../components/InhoudPagina.astro';
+import { mijnCuriusPagina } from '../lib/mijncurius.mjs';
 import { haalSite } from '../lib/site.mjs';
 
 export async function getStaticPaths() {
   const site = await haalSite();
-  return Object.keys(site.paginas).map((pad) => ({ params: { pad }, props: { pad } }));
+  // Het fotoalbum en Mijn Curius maakt [taal]/[...mijn].astro.
+  return Object.keys(site.paginas)
+    .filter((pad) => !mijnCuriusPagina(pad))
+    .map((pad) => ({ params: { pad }, props: { pad } }));
 }
 
 const site = await haalSite();

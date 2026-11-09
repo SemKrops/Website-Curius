@@ -130,6 +130,8 @@ function leesElement($, el, blokken) {
     const titel = tekstVan($, $el.find('legend').first());
     return blokken.push({ type: 'formulier', titel });
   }
+  // Wachtwoord vergeten: ook een formulier op de ledenomgeving.
+  if ($el.is('#changepassword')) return blokken.push({ type: 'formulier', titel: '' });
   if ($el.is('.c-blog-article__header')) {
     const datum = tekstVan($, $el.find('.c-blog-article__time'));
     if (datum) blokken.push({ type: 'datum', tekst: datum });

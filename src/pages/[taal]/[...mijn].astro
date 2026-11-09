@@ -1,0 +1,21 @@
+---
+// De pagina's voor leden: Mijn Curius en het fotoalbum, op dezelfde adressen als op de
+// oude site (zie lib/mijncurius.mjs). Een oud adres voor dezelfde pagina stuurt door.
+import Doorverwijzing from '../../components/Doorverwijzing.astro';
+import MijnCurius from '../../components/leden/MijnCurius.astro';
+import { MIJN_CURIUS, OUDE_ADRESSEN, mijnCuriusPagina } from '../../lib/mijncurius.mjs';
+import { haalSite } from '../../lib/site.mjs';
+
+export function getStaticPaths() {
+  const paden = [...MIJN_CURIUS.flatMap((m) => [m.nl, m.en]), ...Object.keys(OUDE_ADRESSEN)];
+  return paden.map((pad) => {
+    const [taal, ...rest] = pad.split('/');
+    return { params: { taal, mijn: rest.join('/') }, props: { pad } };
+  });
+}
+
+const site = await haalSite();
+const pagina = mijnCuriusPagina(Astro.props.pad)!;
+---
+
+{pagina.oud ? <Doorverwijzing naar={`${site.basis}${pagina.pad}/`} /> : <MijnCurius site={site} pagina={pagina} />}

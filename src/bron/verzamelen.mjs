@@ -3,6 +3,7 @@
 // vacatures en nieuws). Het resultaat is één object met alles wat de nieuwe
 // website nodig heeft.
 
+import { mijnCuriusPagina } from '../lib/mijncurius.mjs';
 import { leesDatumTekst } from './datum.mjs';
 import { bronPad, platteTekst } from './html.mjs';
 import { BRON_URL, TALEN } from './instellingen.mjs';
@@ -19,6 +20,7 @@ export const VASTE_PADEN = {
     leden: 'nl/mijn-curius',
     contact: 'nl/contact',
     lidWorden: 'nl/vereniging/lid-worden',
+    wachtwoord: 'nl/wachtwoord-vergeten',
   },
   en: {
     activiteiten: 'en/events',
@@ -28,6 +30,7 @@ export const VASTE_PADEN = {
     leden: 'en/my-curius',
     contact: 'en/contact',
     lidWorden: 'en/association/become-a-member',
+    wachtwoord: 'en/forgot-password',
   },
 };
 
@@ -83,6 +86,8 @@ export function herkenDetail(pad) {
 }
 
 export const isLedenPad = (pad) => /^(nl\/mijn-curius|en\/my-curius)(\/|$)/.test(pad ?? '');
+// De link "Bekijk alle activiteiten" op de oude site gaat naar info zonder nummer.
+export const isActiviteitenInfo = (pad) => /^(nl\/activiteiten|en\/events)\/info$/.test(pad ?? '');
 export const taalVan = (pad) => (String(pad).startsWith('en') ? 'en' : 'nl');
 
 export function* alleKnopen(menu, ouders = []) {
@@ -112,10 +117,28 @@ function eindjaarHuidigStudiejaar(nu) {
 function bewaartijdVoor(pad, nu, activiteiten) {
   const jaar = pad.match(/commiss\w*-\d+\w*-(\d{4})-(\d{4})\//);
   if (jaar && +jaar[2] < eindjaarHuidigStudiejaar(nu)) return 7 * 24 * 60;
+  // Een nieuwsbericht van meer dan een maand oud verandert niet meer.
+  const nieuws = pad.match(/^(?:nl\/nieuws|en\/news)\/(\d{4}-\d{2}-\d{2})-/)?.[1];
+  if (nieuws && Date.parse(nieuws) < nu.getTime() - 30 * 24 * 3600_000) return 7 * 24 * 60;
   const activiteit = pad.match(/\/info\/(\d+)/)?.[1];
   const eind = activiteit && activiteiten.get(activiteit);
   if (eind && Date.parse(eind) < nu.getTime() - 14 * 24 * 3600_000) return 7 * 24 * 60;
   return undefined;
+}
+
+// Hoeveel pagina's buiten het menu (waar alleen teksten naar linken) we hooguit ophalen.
+// Een fout in een tekst kan zo nooit de hele oude site binnenhalen.
+const MAX_LOSSE_PAGINAS = 80;
+
+// Een adres van een andere site zonder de volgcodes van Google Analytics erin.
+function zonderVolgcodes(url) {
+  try {
+    const u = new URL(url);
+    for (const naam of [...u.searchParams.keys()]) if (/^(_gl|_ga|_gac|utm_\w+|gclid|fbclid)$/i.test(naam)) u.searchParams.delete(naam);
+    return u.href;
+  } catch {
+    return url;
+  }
 }
 
 const isNaarHome = (antwoord, pad) => {
@@ -126,7 +149,10 @@ const isNaarHome = (antwoord, pad) => {
 
 export async function verzamel({ nu = new Date(), log = console.log } = {}) {
   const begin = Date.now();
-  const site = { gemaakt: nu.toISOString(), bron: BRON_URL, talen: {}, paginas: {} };
+  // doorverwezen: pagina's die op de oude site doorsturen naar een andere website
+  // (zoals een activiteit met kaartjes op weticket.io). Links daarheen gaan meteen naar die site.
+  // dood: pagina's die niet (meer) bestaan. Links daarheen worden gewone tekst.
+  const site = { gemaakt: nu.toISOString(), bron: BRON_URL, talen: {}, paginas: {}, doorverwezen: {}, dood: {} };
 
   // 1. De homepagina's: het menu en de vaste onderdelen.
   for (const taal of TALEN) {
@@ -146,6 +172,7 @@ export async function verzamel({ nu = new Date(), log = console.log } = {}) {
     const antwoord = await haal(pad, bewaarMinuten ? { bewaarMinuten } : undefined);
     if (antwoord.extern) {
       if (knoop) knoop.extern = antwoord.extern;
+      site.doorverwezen[pad] = zonderVolgcodes(antwoord.extern);
       return undefined;
     }
     if (antwoord.status === 401 || antwoord.status === 403) {
@@ -153,8 +180,11 @@ export async function verzamel({ nu = new Date(), log = console.log } = {}) {
       site.paginas[pad] = { pad, taal, soort: 'leden', titel: titel ?? pad, blokken: [], bron: naarUrl(pad) };
       return site.paginas[pad];
     }
-    if (antwoord.status !== 200 || isNaarHome(antwoord, pad)) {
+    const naarHome = antwoord.status === 200 && isNaarHome(antwoord, pad);
+    if (antwoord.status !== 200 || naarHome) {
       if (knoop) knoop.weg = true;
+      // Bestaat niet (meer) op de oude site: een link daarheen wordt gewone tekst.
+      if (antwoord.status === 404 || antwoord.status === 410 || naarHome) site.dood[pad] = true;
       if (antwoord.status !== 404 && antwoord.status !== 200) log(`[bron] ${pad}: ${antwoord.fout ?? antwoord.status}`);
       return undefined;
     }
@@ -183,6 +213,7 @@ export async function verzamel({ nu = new Date(), log = console.log } = {}) {
       taken.push(laad(knoop.pad, taal, knoop.titel, knoop));
     }
     taken.push(laad(VASTE_PADEN[taal].nieuws, taal, taal === 'nl' ? 'Nieuws' : 'News'));
+    if (!site.paginas[VASTE_PADEN[taal].wachtwoord]) taken.push(laad(VASTE_PADEN[taal].wachtwoord, taal));
   }
   await Promise.all(taken);
 
@@ -195,33 +226,62 @@ export async function verzamel({ nu = new Date(), log = console.log } = {}) {
     }
   }
   const gezien = new Set();
-  for (let ronde = 1; ronde <= 3; ronde++) {
-    // Per taal en sleutel het beste pad: het langste (met het jaar erin, bij commissies).
+  const haalDetails = async () => {
+    for (let ronde = 1; ronde <= 3; ronde++) {
+      // Per taal en sleutel het beste pad: het langste (met het jaar erin, bij commissies).
+      const nodig = new Map();
+      for (const pagina of Object.values(site.paginas)) {
+        for (const href of linksIn(pagina.blokken)) {
+          const pad = bronPad(href);
+          const detail = pad && herkenDetail(pad);
+          if (!detail) continue;
+          const doelPad = detail.soort.pad(detail.m, pagina.taal);
+          if (!doelPad) continue;
+          const sleutel = `${pagina.taal}|${detail.sleutel}`;
+          if (gezien.has(sleutel)) continue;
+          const huidig = nodig.get(sleutel);
+          if (!huidig || doelPad.length > huidig.pad.length) nodig.set(sleutel, { pad: doelPad, taal: pagina.taal, soort: detail.soort.soort });
+        }
+      }
+      if (!nodig.size) break;
+      await Promise.all(
+        [...nodig.entries()].map(async ([sleutel, { pad, taal, soort }]) => {
+          gezien.add(sleutel);
+          const pagina = await laad(pad, taal, undefined, undefined, bewaartijdVoor(pad, nu, eindTijden));
+          if (pagina && pagina.soort === 'pagina') pagina.soort = soort;
+        }),
+      );
+    }
+  };
+  await haalDetails();
+
+  // 4. Pagina's die niet in het menu staan maar waar een tekst naar linkt, zoals
+  //    "Bachelor eindproject" vanaf de pagina Bachelor. Twee rondes.
+  let losse = 0;
+  for (let ronde = 1; ronde <= 2 && losse < MAX_LOSSE_PAGINAS; ronde++) {
     const nodig = new Map();
     for (const pagina of Object.values(site.paginas)) {
       for (const href of linksIn(pagina.blokken)) {
         const pad = bronPad(href);
-        const detail = pad && herkenDetail(pad);
-        if (!detail) continue;
-        const doelPad = detail.soort.pad(detail.m, pagina.taal);
-        if (!doelPad) continue;
-        const sleutel = `${pagina.taal}|${detail.sleutel}`;
-        if (gezien.has(sleutel)) continue;
-        const huidig = nodig.get(sleutel);
-        if (!huidig || doelPad.length > huidig.pad.length) nodig.set(sleutel, { pad: doelPad, taal: pagina.taal, soort: detail.soort.soort });
+        if (!pad || nodig.has(pad) || site.paginas[pad] || pad in site.doorverwezen || gezien.has(pad)) continue;
+        if (TALEN.includes(pad) || herkenDetail(pad) || isLedenPad(pad) || mijnCuriusPagina(pad) || isActiviteitenInfo(pad)) continue;
+        nodig.set(pad, taalVan(pad));
       }
     }
-    if (!nodig.size) break;
+    const lijst = [...nodig].slice(0, MAX_LOSSE_PAGINAS - losse);
+    if (!lijst.length) break;
+    losse += lijst.length;
     await Promise.all(
-      [...nodig.entries()].map(async ([sleutel, { pad, taal, soort }]) => {
-        gezien.add(sleutel);
-        const pagina = await laad(pad, taal, undefined, undefined, bewaartijdVoor(pad, nu, eindTijden));
-        if (pagina && pagina.soort === 'pagina') pagina.soort = soort;
+      lijst.map(([pad, taal]) => {
+        gezien.add(pad);
+        return laad(pad, taal);
       }),
     );
   }
+  // En de activiteiten, nieuwsberichten en dergelijke waar die pagina's naar linken.
+  if (losse) await haalDetails();
 
-  // 4. Activiteiten: kalender, lijsten en detailpagina's samengevoegd.
+  // 5. Activiteiten: kalender, lijsten en detailpagina's samengevoegd.
   site.activiteiten = {};
   for (const taal of TALEN) site.activiteiten[taal] = verzamelActiviteiten(site, taal, nu);
 
@@ -251,6 +311,7 @@ function verzamelActiviteiten(site, taal, nu) {
         kanInschrijven: item.kanInschrijven,
         soort: item.soort,
         samenvattingHtml: item.html,
+        bronHref: item.href,
       });
     }
   }

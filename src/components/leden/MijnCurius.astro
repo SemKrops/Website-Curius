@@ -1,0 +1,92 @@
+---
+// Een pagina voor leden (Mijn Curius of het fotoalbum). De pagina zelf is voor iedereen
+// hetzelfde: niet ingelogd zie je het formulier om in te loggen, ingelogd vult een script
+// in lib/mijn de pagina met gegevens van de Curius server.
+import Basis from '../../layouts/Basis.astro';
+import Icoon from '../Icoon.astro';
+import Kruimels from '../Kruimels.astro';
+import Zijmenu from '../Zijmenu.astro';
+import InlogFormulier from './InlogFormulier.astro';
+import MijnMenu from './MijnMenu.astro';
+import { lt } from '../../lib/ledenteksten.mjs';
+import { MIJN_CURIUS } from '../../lib/mijncurius.mjs';
+
+interface Props {
+  site: any;
+  pagina: { deel: string; taal: 'nl' | 'en'; pad: string; icoon: string };
+}
+const { site, pagina } = Astro.props;
+const { deel, taal } = pagina;
+const t = lt(taal);
+const basis = site.basis;
+const links = site.links[taal];
+const anderTaal = taal === 'nl' ? 'en' : 'nl';
+const huidig = MIJN_CURIUS.find((m) => m.deel === deel)!;
+
+// Het fotoalbum staat op de oude site onder Media: dan het menu en kruimelpad van Media.
+const sitePagina = site.paginas[pagina.pad];
+const onderMedia = deel === 'fotos' && sitePagina?.sectie;
+const titel = deel === 'overzicht' ? t.mijnCurius : onderMedia ? sitePagina.menuTitel ?? sitePagina.titel : t.delen[deel][0];
+const intro = deel === 'overzicht' ? t.mijnCuriusUitleg : t.delen[deel][1];
+const kruimels = onderMedia ? sitePagina.kruimels ?? [] : deel === 'overzicht' ? [] : [{ titel: t.mijnCurius, href: links.mijn.overzicht }];
+const sectieTitel = onderMedia ? site.talen[taal].menu.find((k: any) => k.pad === sitePagina.sectie)?.titel : t.mijnCurius;
+
+// Wat de scripts nodig hebben: de adressen van Mijn Curius en van de activiteiten.
+const metActiviteiten = deel === 'overzicht' || deel === 'activiteiten';
+const gegevens = JSON.stringify({
+  links: links.mijn,
+  activiteitenPagina: links.activiteiten,
+  activiteiten: metActiviteiten ? Object.fromEntries(site.activiteiten[taal].filter((a: any) => !a.extern).map((a: any) => [a.id, a.href])) : {},
+});
+const menuPagina = onderMedia ? { ...sitePagina, pad: pagina.pad } : undefined;
+const basisPagina = {
+  pad: pagina.pad,
+  sectie: onderMedia ? sitePagina.sectie : undefined,
+  kruimels,
+  ander: `${basis}${huidig[anderTaal]}/`,
+};
+---
+
+<Basis site={site} taal={taal} titel={titel} beschrijving={intro} pagina={basisPagina} sectieTitel={sectieTitel}>
+  <header class="paginakop">
+    <div class="omhulsel">
+      <Kruimels site={site} taal={taal} kruimels={kruimels} titel={titel} />
+      <h1>{titel}</h1>
+      <p class="paginakop__inleiding">{intro}</p>
+    </div>
+  </header>
+
+  <div class="inhoud">
+    <div class="omhulsel inhoud-raster">
+      <aside>
+        {onderMedia ? <Zijmenu site={site} taal={taal} pagina={menuPagina} /> : <MijnMenu site={site} taal={taal} deel={deel} />}
+      </aside>
+
+      <div class="secties">
+        <details class="zijmenu-mobiel" data-pagefind-ignore>
+          <summary>
+            <Icoon naam="menu" grootte={18} />
+            {sectieTitel}
+            <Icoon naam="chevronDown" grootte={18} class="pijl" />
+          </summary>
+          {onderMedia ? <Zijmenu site={site} taal={taal} pagina={menuPagina} /> : <MijnMenu site={site} taal={taal} deel={deel} />}
+        </details>
+        <div class="alleen-uitgelogd mijn-uit" data-pagefind-ignore>
+          <div class="inlogkaart">
+            <div class="inlogkaart__tekst">
+              <span class="inlogkaart__slot"><Icoon naam="lock" grootte={22} /></span>
+              <h2>{t.alleenLeden}</h2>
+              <p>{t.alleenLedenTekst}</p>
+            </div>
+            <InlogFormulier site={site} taal={taal} id="pagina" />
+          </div>
+        </div>
+        <div class="alleen-ingelogd mijn-in" data-mijn={deel} data-gegevens={gegevens} aria-live="polite" data-pagefind-ignore></div>
+      </div>
+    </div>
+  </div>
+</Basis>
+
+<script>
+  import '../../lib/mijn/start.mjs';
+</script>

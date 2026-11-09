@@ -1,17 +1,22 @@
 // Maakt van de verzamelde site een geheel:
-// * links naar pagina's die op de nieuwe site staan worden links binnen de nieuwe site;
-// * links naar wat alleen op de oude site staat (inloggen, formulieren) gaan daarheen;
+// * links naar pagina's die op de nieuwe site staan worden links binnen de nieuwe site,
+//   ook die naar Mijn Curius (zie lib/mijncurius.mjs);
+// * links naar wat alleen op de oude site staat gaan daarheen;
 // * elke pagina krijgt een kruimelpad, haar plek in het menu en haar tegenhanger
 //   in de andere taal.
 
 import { absoluut, bronPad, echteAfbeelding, hashVan, laadStuk, platteTekst, samenvatting } from './html.mjs';
-import { LEDEN_URL, TALEN } from './instellingen.mjs';
-import { DETAILS, VASTE_PADEN, alleKnopen, herkenDetail, isLedenPad, taalVan } from './verzamelen.mjs';
+import { MIJN_CURIUS, mijnCuriusPagina } from '../lib/mijncurius.mjs';
+import { LEDEN_URL, SERVER_URL, TALEN } from './instellingen.mjs';
+import { DETAILS, VASTE_PADEN, alleKnopen, herkenDetail, isActiviteitenInfo, isLedenPad, taalVan } from './verzamelen.mjs';
 
 export function koppel(ruw, { basis = '/' } = {}) {
   const site = structuredClone(ruw);
   basis = basis.endsWith('/') ? basis : basis + '/';
   site.basis = basis;
+  site.server = SERVER_URL;
+  site.doorverwezen ??= {};
+  site.dood ??= {};
   const paginas = site.paginas;
 
   // Per taal en soort detailpagina: sleutel naar pad.
@@ -27,16 +32,22 @@ export function koppel(ruw, { basis = '/' } = {}) {
   // Een link van de oude site omzetten. `taal` is de taal van de pagina waar hij op staat.
   const zoek = (href, taal) => {
     const abs = absoluut(href);
-    const pad = bronPad(abs);
+    let pad = bronPad(abs);
     if (!pad) return { href: abs ?? href, extern: /^https?:/i.test(abs ?? '') };
     const hash = hashVan(abs);
     const detail = herkenDetail(pad);
     if (detail) {
       const doel = detailIndex.get(`${taal}|${detail.sleutel}`) ?? detailIndex.get(`${taalVan(pad)}|${detail.sleutel}`);
       if (doel) return { href: interneLink(doel, hash), pad: doel };
+      const elders = site.doorverwezen[detail.soort.pad(detail.m, taal) ?? ''] ?? site.doorverwezen[pad];
+      if (elders) return { href: elders, extern: true };
     }
+    const mijn = mijnCuriusPagina(pad);
+    if (mijn) return { href: interneLink(mijn.pad, hash), pad: mijn.pad };
+    if (isActiviteitenInfo(pad)) pad = VASTE_PADEN[taal ?? taalVan(pad)].activiteiten;
     if (paginas[pad]) return { href: interneLink(pad, hash), pad };
-    return { href: oudeSite(pad, hash), oud: true };
+    if (site.doorverwezen[pad]) return { href: site.doorverwezen[pad], extern: true };
+    return { href: oudeSite(pad, hash), oud: true, dood: !!site.dood[pad] };
   };
   site.zoek = zoek;
 
@@ -51,8 +62,10 @@ export function koppel(ruw, { basis = '/' } = {}) {
   // Het menu: elke knoop krijgt een link (binnen de site, naar buiten of naar het ledendeel).
   for (const taal of TALEN) {
     for (const { knoop } of alleKnopen(site.talen[taal].menu)) {
+      const mijn = mijnCuriusPagina(knoop.pad);
       if (knoop.extern) knoop.link = { href: knoop.extern, extern: true };
       else if (knoop.pad && paginas[knoop.pad]) knoop.link = { href: interneLink(knoop.pad), pad: knoop.pad };
+      else if (mijn) knoop.link = { href: interneLink(mijn.pad), pad: mijn.pad };
       else if (knoop.pad) knoop.link = { href: oudeSite(knoop.pad), oud: true };
     }
     // Weg: pagina's die niet (meer) bestaan, en de knop Home (het logo is al de link naar home).
@@ -75,7 +88,8 @@ export function koppel(ruw, { basis = '/' } = {}) {
   for (const pagina of Object.values(paginas)) {
     if (pagina.kruimels || pagina.soort === 'home') continue;
     const detail = herkenDetail(pagina.pad);
-    let ouderPad = detail?.soort.ouder[pagina.taal];
+    // Een pagina buiten het menu valt onder de pagina erboven (en/education/bachelor onder en/education).
+    let ouderPad = detail ? detail.soort.ouder[pagina.taal] : pagina.pad.split('/').slice(0, -1).join('/');
     // Een commissie met het jaar in het pad valt onder de pagina van dat jaar.
     const jaarPad = pagina.pad.split('/').slice(0, -1).join('/');
     if (detail?.soort.soort === 'commissie' && paginas[jaarPad]) ouderPad = jaarPad;
@@ -141,8 +155,12 @@ export function koppel(ruw, { basis = '/' } = {}) {
   // Activiteiten: de link naar de pagina op de nieuwe site, of anders naar de oude.
   for (const taal of TALEN) {
     for (const a of site.activiteiten[taal]) {
-      a.href = a.pad ? interneLink(a.pad) : zoek(`${DETAILS[0].pad({ 1: a.id }, taal)}`, taal).href;
-      a.inschrijfLink = oudeSite(DETAILS[0].pad({ 1: a.id }, taal));
+      if (a.pad) a.href = interneLink(a.pad);
+      else {
+        const doel = zoek(a.bronHref ?? DETAILS[0].pad({ 1: a.id }, taal), taal);
+        a.href = doel.href;
+        if (doel.extern) a.extern = true;
+      }
     }
   }
 
@@ -161,8 +179,9 @@ export function koppel(ruw, { basis = '/' } = {}) {
       nieuws: link(vast.nieuws),
       contact: link(vast.contact),
       lidWorden: link(vast.lidWorden),
-      leden: oudeSite(vast.leden),
-      inloggen: `${LEDEN_URL}/login`,
+      wachtwoord: link(vast.wachtwoord),
+      leden: interneLink(MIJN_CURIUS[0][taal]),
+      mijn: Object.fromEntries(MIJN_CURIUS.map((m) => [m.deel, interneLink(m[taal])])),
       agendaFeed: `${basis}${taal}/agenda.ics`,
     };
   }
@@ -182,6 +201,8 @@ function zetLinksOm(blok, zoek) {
     const $ = laadStuk(blok.html);
     $('a[href]').each((_, a) => {
       const doel = zoek($(a).attr('href'));
+      // Een link naar een pagina die ook op de oude site niet meer bestaat: alleen de tekst.
+      if (doel.dood) return void $(a).replaceWith($(a).contents());
       $(a).attr('href', doel.href);
       if (doel.extern) $(a).attr('rel', 'noopener');
     });

@@ -9,6 +9,7 @@ import Icoon from './Icoon.astro';
 import Kruimels from './Kruimels.astro';
 import Zijmenu from './Zijmenu.astro';
 import { VASTE_PADEN } from '../bron/verzamelen.mjs';
+import { lt } from '../lib/ledenteksten.mjs';
 import { t as teksten } from '../lib/teksten.mjs';
 import { isToekomst } from '../lib/vorm.mjs';
 
@@ -69,14 +70,22 @@ const kinderen = pagina.kinderen ?? [];
 
         {
           pagina.soort === 'leden' && (
-            <div class="melding">
+            <div class="melding" data-pagefind-ignore>
               <Icoon naam="lock" grootte={24} />
-              <div>
-                <h2>{t.alleenLeden}</h2>
-                <p>{t.alleenLedenTekst}</p>
-                <a class="knop knop--primair knop--klein" href={pagina.bron}>
+              <div class="alleen-uitgelogd">
+                <h2>{lt(taal).alleenLeden}</h2>
+                <p>{lt(taal).alleenLedenTekst}</p>
+                <button class="knop knop--primair knop--klein" type="button" data-open-inloggen>
                   <Icoon naam="login" grootte={17} />
-                  {t.inloggen}
+                  {lt(taal).inloggen}
+                </button>
+              </div>
+              <div class="alleen-ingelogd">
+                <h2>{lt(taal).alleenLeden}</h2>
+                <p>{lt(taal).nogOudeSite}</p>
+                <a class="knop knop--rand knop--klein" href={pagina.bron} rel="noopener">
+                  {lt(taal).bekijkOudeSite}
+                  <Icoon naam="external" grootte={16} />
                 </a>
               </div>
             </div>

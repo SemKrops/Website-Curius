@@ -1,0 +1,30 @@
+---
+// Het formulier om in te loggen. Het script in lib/ledenkop.mjs doet de rest.
+import Icoon from '../Icoon.astro';
+import { lt } from '../../lib/ledenteksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  id: string;
+}
+const { site, taal, id } = Astro.props;
+const t = lt(taal);
+---
+
+<form class="inlogformulier" data-inlogformulier novalidate>
+  <div class="veld">
+    <label for={`${id}-gebruiker`}>{t.gebruikersnaam}</label>
+    <input id={`${id}-gebruiker`} name="gebruikersnaam" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+  </div>
+  <div class="veld">
+    <label for={`${id}-wachtwoord`}>{t.wachtwoord}</label>
+    <input id={`${id}-wachtwoord`} name="wachtwoord" type="password" autocomplete="current-password" required />
+  </div>
+  <div data-formmelding></div>
+  <button class="knop knop--primair knop--breed" type="submit">
+    <Icoon naam="login" grootte={18} />
+    {t.inloggen}
+  </button>
+  <a class="inlogformulier__vergeten" href={site.links[taal].wachtwoord}>{t.wachtwoordVergeten}</a>
+</form>

@@ -1,0 +1,37 @@
+---
+// Het menu van Mijn Curius, naast de inhoud (en op een telefoon uitklapbaar boven de inhoud).
+import Icoon from '../Icoon.astro';
+import { lt } from '../../lib/ledenteksten.mjs';
+import { MIJN_CURIUS } from '../../lib/mijncurius.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+  deel: string;
+}
+const { site, taal, deel } = Astro.props;
+const t = lt(taal);
+const links = site.links[taal].mijn;
+---
+
+<nav class="zijmenu" aria-label={t.mijnCurius} data-pagefind-ignore>
+  <a class="zijmenu__kop" href={links.overzicht} aria-current={deel === 'overzicht' ? 'page' : undefined}>
+    <Icoon naam="user" grootte={20} />
+    {t.mijnCurius}
+  </a>
+  <ul>
+    {
+      MIJN_CURIUS.filter((m) => m.deel !== 'overzicht').map((m) => (
+        <li>
+          <a href={links[m.deel]} aria-current={m.deel === deel ? 'page' : undefined}>
+            {t.delen[m.deel][0]}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <button class="zijmenu__uitloggen alleen-ingelogd" type="button" data-uitloggen>
+    <Icoon naam="logout" grootte={17} />
+    {t.uitloggen}
+  </button>
+</nav>

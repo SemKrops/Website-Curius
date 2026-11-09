@@ -11,14 +11,23 @@ export const netjes = (tekst) => String(tekst ?? '').replace(/[\s ]+/g, ' ').tr
 
 export const tekstVan = ($, el) => netjes($(el).text());
 
+const BRON = new URL(BRON_URL);
+
 // Een adres van de site (vaak relatief, zoals "f/files/..." of "/_/...") als volledig adres.
+// Een adres op www.curius.nl wordt een adres op BRON_URL: wijst www.curius.nl straks naar
+// de nieuwe site, dan blijven bestanden en afbeeldingen zo gewoon van Genkgo komen.
 export function absoluut(href) {
   if (!href) return undefined;
   const schoon = String(href).trim();
-  if (!schoon || /^(javascript|data):/i.test(schoon)) return undefined;
+  if (!schoon || /^(javascript|vbscript|data):/i.test(schoon.replace(/[\s\u0000-\u001f]+/g, ''))) return undefined;
   if (/^(mailto|tel):/i.test(schoon)) return schoon;
   try {
-    return new URL(schoon, BRON_URL + '/').href;
+    const url = new URL(schoon, BRON_URL + '/');
+    if (/^https?:$/.test(url.protocol) && isBronHost(url.host) && url.host !== BRON.host) {
+      url.protocol = BRON.protocol;
+      url.host = BRON.host;
+    }
+    return url.href;
   } catch {
     return undefined;
   }
@@ -91,7 +100,7 @@ const isLeeg = ($, el) => {
 // (vaste breedtes, lettertypes, kleuren), met volledige adressen en lazy loading.
 export function schoonHtml(html) {
   const $ = laadStuk(html);
-  $('script, style, noscript, form, input, button, select, textarea, link, meta').remove();
+  $('script, style, noscript, form, input, button, select, textarea, link, meta, base, object, embed, applet, frame, frameset, template').remove();
 
   // Video's uit de editor: alleen de video zelf bewaren.
   $('div.ckeditor-html5-video').each((_, el) => {
@@ -117,9 +126,12 @@ export function schoonHtml(html) {
     }
   });
 
+  // Leden loggen in op deze site, dus uit teksten mag nooit code meekomen: geen
+  // onclick en dergelijke, en geen adressen die met javascript: beginnen.
   $('*').each((_, el) => {
-    for (const naam of Object.keys(el.attribs ?? {})) {
-      if (WEG_ATTRIBUTEN.has(naam) || naam.startsWith('on') || naam.startsWith('data-')) $(el).removeAttr(naam);
+    for (const [naam, waarde] of Object.entries(el.attribs ?? {})) {
+      const gevaarlijk = /^(on|formaction|srcdoc|xlink:href)/i.test(naam) || /^\s*(javascript|vbscript|data:text\/html)/i.test(waarde.replace(/[\u0000-\u001f]+/g, ''));
+      if (WEG_ATTRIBUTEN.has(naam) || naam.startsWith('data-') || gevaarlijk) $(el).removeAttr(naam);
     }
   });
 

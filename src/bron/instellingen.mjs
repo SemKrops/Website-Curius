@@ -10,9 +10,14 @@ const zonderSlash = (url) => url.replace(/\/+$/, '');
 // naar deze nieuwe website, zet dan BRON_URL op https://curius.genkgo.app.
 export const BRON_URL = zonderSlash(lees('BRON_URL', 'https://www.curius.nl'));
 
-// Waar leden inloggen, zich inschrijven voor activiteiten en Mijn Curius vinden.
-// Dat blijft de site in Genkgo, dus standaard hetzelfde als BRON_URL.
+// Waar links naartoe gaan voor wat (nog) alleen op de site in Genkgo werkt, zoals de
+// formulieren. Standaard hetzelfde als BRON_URL.
 export const LEDEN_URL = zonderSlash(lees('LEDEN_URL', BRON_URL));
+
+// De server van de Curius app. Daarmee loggen leden in op de website, schrijven ze
+// zich in voor activiteiten en werkt Mijn Curius. De Genkgo API key staat alleen op
+// die server, nooit in de website.
+export const SERVER_URL = zonderSlash(lees('SERVER_URL', 'https://curius.tailbb09ca.ts.net'));
 
 // Opgehaalde pagina's worden bewaard in deze map. Mislukt het ophalen van een
 // pagina, dan gebruikt de bouw de laatst bewaarde versie.

@@ -98,9 +98,23 @@ const isNaarBuiten = (k: any) => k.link?.extern || k.link?.oud;
       <a class="taalknop verberg-mobiel" href={ander} hreflang={taal === 'nl' ? 'en' : 'nl'} aria-label={t.taalLabel}>
         <Icoon naam="globe" grootte={17} />{t.taalKort}
       </a>
-      <a class="knop knop--rand knop--klein verberg-mobiel" href={links.leden}>
-        <Icoon naam="login" grootte={17} />{t.mijnCurius}
+      <a class="knop knop--rand knop--klein verberg-mobiel ledenknop" href={links.leden} data-ledenknop>
+        <span class="ledenknop__uit"><Icoon naam="login" grootte={17} />{t.mijnCurius}</span>
+        <span class="ledenknop__in"><span class="ledenknop__letters" data-ledenknop-letters></span><span data-ledenknop-naam></span></span>
       </a>
+      <script is:inline>
+        // Ingelogd? Dan meteen je naam in de kop, zonder dat eerst Mijn Curius te zien is.
+        try {
+          var s = JSON.parse(localStorage.getItem('curius.sessie') || 'null');
+          var k = document.currentScript.previousElementSibling;
+          if (s && s.token && k) {
+            k.setAttribute('data-ingelogd', '');
+            k.querySelector('[data-ledenknop-naam]').textContent = s.voornaam || k.textContent.trim();
+            var a = String(s.achternaam || '').split(/\s+/).filter(function (w) { return /^[A-ZÀ-Þ]/.test(w); }).pop() || s.achternaam || '';
+            k.querySelector('[data-ledenknop-letters]').textContent = ((s.voornaam || '?')[0] + (a[0] || '')).toUpperCase();
+          }
+        } catch (e) {}
+      </script>
       <a class="knop knop--primair knop--klein verberg-mobiel" href={links.lidWorden}>{t.lidWorden}</a>
       <button class="knop knop--rand knop--icoon menuknop" type="button" data-open-menu aria-label={t.menu} aria-controls="mobiel-menu">
         <Icoon naam="menu" grootte={20} />
@@ -273,7 +287,10 @@ const isNaarBuiten = (k: any) => k.link?.extern || k.link?.oud;
       }
     </ul>
     <div class="mobiel__knoppen">
-      <a class="knop knop--rand" href={links.leden}><Icoon naam="login" grootte={18} />{t.mijnCurius}</a>
+      <a class="knop knop--rand ledenknop" href={links.leden} data-ledenknop>
+        <span class="ledenknop__uit"><Icoon naam="login" grootte={18} />{t.mijnCurius}</span>
+        <span class="ledenknop__in"><span class="ledenknop__letters" data-ledenknop-letters></span><span data-ledenknop-naam></span></span>
+      </a>
       <a class="knop knop--primair" href={links.lidWorden}>{t.lidWorden}</a>
     </div>
     <a class="taalknop" href={ander} hreflang={taal === 'nl' ? 'en' : 'nl'} style="justify-self:center">

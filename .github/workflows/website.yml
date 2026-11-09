@@ -53,6 +53,8 @@ jobs:
           # Leeg betekent www.curius.nl. Zie LEESMIJ.md voor het overstappen naar het eigen domein.
           BRON_URL: ${{ vars.BRON_URL }}
           LEDEN_URL: ${{ vars.LEDEN_URL }}
+          # Leeg betekent de server van de Curius app (zie LEESMIJ.md, Leden).
+          SERVER_URL: ${{ vars.SERVER_URL }}
 
       - uses: actions/upload-pages-artifact@v5
         with:

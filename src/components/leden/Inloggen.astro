@@ -1,0 +1,32 @@
+---
+// Het venster om in te loggen, op elke pagina. Het opent vanuit de knoppen voor
+// inschrijven (en alles met data-open-inloggen).
+import Icoon from '../Icoon.astro';
+import InlogFormulier from './InlogFormulier.astro';
+import { lt } from '../../lib/ledenteksten.mjs';
+
+interface Props {
+  site: any;
+  taal: 'nl' | 'en';
+}
+const { site, taal } = Astro.props;
+const t = lt(taal);
+---
+
+<dialog class="venster inlogvenster" aria-labelledby="inlogvenster-kop" data-inlogvenster data-pagefind-ignore>
+  <div class="venster__binnen">
+    <div class="inlogvenster__kop">
+      <img src={`${site.basis}borstbeeld-rood.png`} alt="" width="40" height="42" />
+      <h2 id="inlogvenster-kop">{t.inlogKop}</h2>
+      <p data-inlog-reden>{t.inlogUitleg}</p>
+    </div>
+    <InlogFormulier site={site} taal={taal} id="venster" />
+  </div>
+  <button class="venster__sluit knop knop--rand knop--icoon" type="button" data-sluit-venster aria-label={t.sluiten}>
+    <Icoon naam="close" grootte={20} />
+  </button>
+</dialog>
+
+<script>
+  import '../../lib/ledenkop.mjs';
+</script>

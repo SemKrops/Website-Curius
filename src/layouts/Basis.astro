@@ -7,6 +7,7 @@ import '../styles/basis.css';
 import Kop from '../components/Kop.astro';
 import Voet from '../components/Voet.astro';
 import Zoeken from '../components/Zoeken.astro';
+import Inloggen from '../components/leden/Inloggen.astro';
 import { t as teksten } from '../lib/teksten.mjs';
 
 interface Props {
@@ -29,7 +30,7 @@ const og = afbeelding ?? (Astro.site ? new URL(`${site.basis}logo-curius.png`, A
 ---
 
 <!doctype html>
-<html lang={taal} style={`--borstbeeld: url(${site.basis}borstbeeld-wit.png)`}>
+<html lang={taal} data-server={site.server} style={`--borstbeeld: url(${site.basis}borstbeeld-wit.png)`}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -37,6 +38,10 @@ const og = afbeelding ?? (Astro.site ? new URL(`${site.basis}logo-curius.png`, A
       // Een paar afbeeldingen ontbreken op de oude site. Die markeren we, zodat de CSS er
       // een nette lege plek van maakt in plaats van een kapot plaatje.
       addEventListener('error', (e) => e.target instanceof HTMLImageElement && e.target.setAttribute('data-kapot', ''), true);
+      // Ingelogd als lid? Dan meteen de pagina voor leden laten zien (zie lib/leden.mjs).
+      try {
+        if ((JSON.parse(localStorage.getItem('curius.sessie') || 'null') || {}).token) document.documentElement.setAttribute('data-ingelogd', '');
+      } catch (e) {}
     </script>
     <title>{volledigeTitel}</title>
     {beschrijving && <meta name="description" content={beschrijving} />}
@@ -60,5 +65,6 @@ const og = afbeelding ?? (Astro.site ? new URL(`${site.basis}logo-curius.png`, A
     </main>
     <Voet site={site} taal={taal} />
     <Zoeken site={site} taal={taal} />
+    <Inloggen site={site} taal={taal} />
   </body>
 </html>

@@ -57,3 +57,24 @@ test('absoluut en bronPad', () => {
   assert.equal(bronPad('https://www.curius.nl/nl/vereniging/'), 'nl/vereniging');
   assert.equal(bronPad('https://www.example.com/x'), undefined);
 });
+
+test('geen code uit teksten: javascript links, onclick en ingesloten objecten verdwijnen', () => {
+  const uit = schoonHtml(`
+    <p><a href="javascript:alert(1)">een</a> <a href=" JaVa&#x09;script:alert(2)">twee</a> <a href="data:text/html,x">drie</a></p>
+    <p><img src="x.png" onerror="alert(3)"><svg><a xlink:href="javascript:alert(4)">vier</a></svg></p>
+    <object data="x.swf"></object><embed src="x.swf"><base href="https://kwaad.example/"><template><p>verborgen</p></template>
+    <p><a href="/nl/contact" formaction="javascript:alert(5)">contact</a></p>`);
+  assert.doesNotMatch(uit, /javascript|alert|onerror|xlink|data:text|<object|<embed|<base|<template|formaction/i);
+  const $ = laad(uit);
+  assert.equal($('a[href]').length, 1);
+  assert.equal($('a[href]').attr('href'), 'https://www.curius.nl/nl/contact');
+  assert.match($.text(), /een twee drie/);
+});
+
+test('absoluut weigert gevaarlijke adressen', () => {
+  assert.equal(absoluut('javascript:alert(1)'), undefined);
+  assert.equal(absoluut('  vbscript:msgbox'), undefined);
+  assert.equal(absoluut('data:text/html;base64,PHNjcmlwdD4='), undefined);
+  assert.equal(absoluut('mailto:info@curius.nl'), 'mailto:info@curius.nl');
+  assert.equal(absoluut('http://curius.nl/nl/agenda'), 'https://www.curius.nl/nl/agenda');
+});

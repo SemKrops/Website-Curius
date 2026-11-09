@@ -1,0 +1,23 @@
+---
+// Een oud adres dat nu een andere pagina is: stuurt de bezoeker meteen door.
+interface Props {
+  naar: string;
+}
+const { naar } = Astro.props;
+const canoniek = Astro.site ? new URL(naar, Astro.site).href : naar;
+---
+
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Curius</title>
+    <link rel="canonical" href={canoniek} />
+    <meta http-equiv="refresh" content={`0; url=${naar}`} />
+    <script is:inline define:vars={{ naar }}>location.replace(naar + location.search + location.hash);</script>
+  </head>
+  <body>
+    <p><a href={naar}>Curius</a></p>
+  </body>
+</html>

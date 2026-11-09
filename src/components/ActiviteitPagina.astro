@@ -102,15 +102,18 @@ const agendaGegevens = a.start
           </dl>
         </div>
 
+        {
+          komend && a.id && (
+            <div
+              class="inschrijven"
+              data-inschrijven={a.id}
+              data-kan={a.kanInschrijven !== false || a.inschrijvingOpen ? '' : undefined}
+              aria-live="polite"
+              data-pagefind-ignore
+            />
+          )
+        }
         <div class="inschrijfblok" data-pagefind-ignore>
-          {
-            komend && a.kanInschrijven !== false && (
-              <a class="knop knop--primair" href={a.inschrijfLink ?? pagina.bron}>
-                {t.inschrijven}
-                <Icoon naam="external" grootte={17} />
-              </a>
-            )
-          }
           {
             komend && agendaGegevens && (
               <button class="knop knop--rand" type="button" data-zet-in-agenda={agendaGegevens}>
@@ -124,15 +127,6 @@ const agendaGegevens = a.start
             {taal === 'nl' ? 'Delen' : 'Share'}
           </button>
         </div>
-        {
-          komend && a.kanInschrijven !== false && (
-            <p class="inschrijfuitleg" data-pagefind-ignore>
-              <Icoon naam="lock" grootte={16} />
-              {t.inschrijvenUitleg}
-            </p>
-          )
-        }
-
         <Blokken site={site} taal={taal} pagina={pagina} />
       </div>
     </div>
@@ -140,6 +134,7 @@ const agendaGegevens = a.start
 </Basis>
 
 <script>
+  import '../lib/inschrijven.mjs';
   import { evenement } from '../lib/ics.mjs';
 
   document.querySelectorAll<HTMLButtonElement>('[data-zet-in-agenda]').forEach((knop) => {
