@@ -2479,13 +2479,16 @@ button {
   border-radius: var(--radius);
   box-shadow: var(--schaduw-hoog);
   padding: 10px;
+}
+
+.snel__links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 6px;
+  margin-top: 6px;
 }
 
 .snel__titel {
-  grid-column: 1 / -1;
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -2514,6 +2517,7 @@ button {
 }
 
 .snel__link .hubkaart__icoon {
+  flex: none;
   width: 42px;
   height: 42px;
 }

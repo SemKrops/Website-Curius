@@ -103,15 +103,17 @@ const nieuws = (nieuwsBlok?.kaarten ?? [])
           <h2 class="snel__titel" id="snel-titel">
             {snel.titel || t.gaDirectNaar}
           </h2>
-          {snel.links.map((l: any) => (
-            <a class="snel__link" href={l.href}>
-              <span class="hubkaart__icoon">
-                <Icoon naam={icoonVoor(l.href + ' ' + l.titel)} grootte={20} />
-              </span>
-              {l.titel}
-              <Icoon naam="arrowRight" grootte={18} class="pijl" />
-            </a>
-          ))}
+          <div class="snel__links">
+            {snel.links.map((l: any) => (
+              <a class="snel__link" href={l.href}>
+                <span class="hubkaart__icoon">
+                  <Icoon naam={icoonVoor(l.href + ' ' + l.titel)} grootte={20} />
+                </span>
+                {l.titel}
+                <Icoon naam="arrowRight" grootte={18} class="pijl" />
+              </a>
+            ))}
+          </div>
         </nav>
       </div>
     )
