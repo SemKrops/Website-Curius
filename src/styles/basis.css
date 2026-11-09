@@ -2276,7 +2276,8 @@ button {
   max-width: 74ch;
 }
 
-.melding .icoon {
+/* Alleen het icoon van de melding zelf, niet dat in een knop erin. */
+.melding > .icoon {
   color: var(--rood);
   margin-top: 2px;
 }
@@ -3161,6 +3162,83 @@ html[data-ingelogd] .alleen-uitgelogd {
 .formmelding--goed {
   background: var(--groen-licht);
   color: var(--groen);
+}
+
+.formmelding--info {
+  background: var(--vlak-2);
+  color: var(--inkt);
+}
+
+[data-formmelding] {
+  display: grid;
+  gap: 8px;
+}
+
+/* Formulieren voor iedereen (lid worden, contact, wachtwoord vergeten) */
+
+.openbaar-formulier {
+  max-width: 720px;
+  margin: 8px 0 24px;
+}
+
+.openbaar-formulier .melding {
+  margin: 0;
+}
+
+.formulier__uitleg {
+  margin: 0;
+  color: var(--zacht);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.veld--vinkje .veld__verplicht {
+  white-space: nowrap;
+}
+
+.som {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  font-size: 1.05rem;
+}
+
+.som__vraag {
+  font-weight: 620;
+}
+
+.som__vraag img {
+  display: block;
+  height: 24px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.veld .som .som__antwoord {
+  width: 7ch;
+  text-align: center;
+}
+
+.melding--goed {
+  border-left-color: var(--groen);
+}
+
+.melding--goed > .icoon {
+  color: var(--groen);
+}
+
+.melding--goed p {
+  color: var(--inkt);
+}
+
+.melding p:last-child {
+  margin-bottom: 0;
+}
+
+.melding--goed:focus {
+  outline: none;
 }
 
 [data-formmelding]:empty {

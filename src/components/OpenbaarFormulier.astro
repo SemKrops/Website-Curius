@@ -1,0 +1,28 @@
+---
+// Een formulier van curius.nl dat iedereen mag invullen (contact, lid worden, wachtwoord
+// vergeten). De velden laadt de browser bij de Curius server (lib/formulier.mjs), zodat
+// het formulier altijd hetzelfde is als het formulier dat het bestuur in Genkgo maakt.
+import { t as teksten } from '../lib/teksten.mjs';
+
+interface Props {
+  blok: any;
+  pagina: any;
+  taal: 'nl' | 'en';
+}
+const { blok, pagina, taal } = Astro.props;
+const t = teksten(taal);
+// Links in de uitleg: pad op curius.nl naar het adres op deze site (of op de oude site).
+const kaart = Object.fromEntries((blok.links ?? []).filter((l: any) => l.van && l.href).map((l: any) => [l.van, l.href]));
+const pad = blok.pad ?? pagina.pad;
+const id = `formulier-${String(pad).replace(/[^a-z0-9]+/gi, '-')}`;
+---
+
+<div class="openbaar-formulier" id={id} data-openbaar-formulier data-pad={pad} data-links={JSON.stringify(kaart)} data-reserve={pagina.bron} data-pagefind-ignore>
+  <p class="laadregel"><span class="draaier" aria-hidden="true"></span>{t.formulierLaden}</p>
+  <noscript><p class="melding">{t.formulierZonderScript}</p></noscript>
+</div>
+
+<script>
+  import { start } from '../lib/formulier.mjs';
+  start();
+</script>

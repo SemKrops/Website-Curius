@@ -35,6 +35,12 @@ Leden loggen in op de nieuwe site met hun Curius account, net als in de app. Daa
   declaratie indienen;
 * de fotoalbums bekijken (onder Media).
 
+Iedereen (ook wie geen lid is) kan op de site zelf de formulieren invullen die op curius.nl staan: lid worden,
+contact en wachtwoord vergeten. De velden komen van het formulier in Genkgo, dus een veld dat het bestuur daar
+toevoegt, staat vanzelf ook op de nieuwe site. Versturen gaat via dezelfde server, die het formulier op curius.nl
+invult. De som tegen robots van curius.nl staat er ook: die rekent de bezoeker zelf uit. Na het versturen ziet de
+bezoeker de tekst die het bestuur in Genkgo bij het formulier onder Afhandeling heeft ingevuld.
+
 Dit gaat allemaal via de server van de Curius app (de repository `studievereniging-curius`, map `server`). De
 website zelf is een gewone site zonder database: pas als iemand inlogt, haalt de browser de gegevens op bij die
 server. De browser bewaart alleen een sessie (een token), nooit het wachtwoord. De Genkgo API key staat alleen op de
@@ -46,7 +52,8 @@ Goed om te weten:
   werkt gewoon.
 * **Verloopt de inlog op curius.nl** (bijvoorbeeld na een herstart van de server), dan vraagt de site het
   wachtwoord nog een keer, net als de app.
-* **Formulieren** (lid worden, contact, wachtwoord vergeten) openen voorlopig nog op de site in Genkgo.
+* **Formulieren** werken pas als de server de nieuwste versie heeft (met `/formulieren`). Tot die tijd, en als
+  de server even niet bereikbaar is, staat er een knop naar het formulier op de site in Genkgo.
 * Op een computer zonder server kun je alles proberen met de proefserver, zie hieronder.
 
 ## Zelf draaien
@@ -76,6 +83,11 @@ SERVER_URL=http://localhost:4400 npm run dev         # de site, met inloggen via
 Log in met gebruikersnaam `lid` en wachtwoord `curius`. Met `PROEF_SITE_VERLOPEN=1 npm run proefserver` doet hij
 alsof de inlog op curius.nl verlopen is, zodat je kunt zien dat de site dan het wachtwoord nog een keer vraagt.
 
+De formulieren (contact, lid worden, wachtwoord vergeten) werken ook met de proefserver. De velden staan in
+`scripts/proefformulieren.json`, zoals de echte server ze van curius.nl leest. Wachtwoord vergeten kent alleen
+`lid`. Typ ergens `verloopt` in een veld om te zien wat er gebeurt als een formulier te lang open heeft gestaan, en
+start hem met `PROEF_FORMULIEREN_WEG=1` om te zien wat bezoekers zien als curius.nl even niet bereikbaar is.
+
 ## Instellingen
 
 Alles werkt zonder instellingen. Aanpassen kan met deze omgevingsvariabelen:
@@ -83,7 +95,7 @@ Alles werkt zonder instellingen. Aanpassen kan met deze omgevingsvariabelen:
 | Variabele            | Standaard               | Wat het doet                                                        |
 | -------------------- | ----------------------- | ------------------------------------------------------------------- |
 | `BRON_URL`           | `https://www.curius.nl` | De site in Genkgo waar de inhoud vandaan komt.                      |
-| `LEDEN_URL`          | gelijk aan `BRON_URL`   | Waar links heen gaan voor wat alleen in Genkgo werkt (formulieren). |
+| `LEDEN_URL`          | gelijk aan `BRON_URL`   | Waar links heen gaan voor wat alleen in Genkgo staat.               |
 | `SERVER_URL`         | de server van de app    | De Curius server waarmee leden inloggen (`https://curius.tailbb09ca.ts.net`). |
 | `SITE_URL`           | GitHub Pages            | Het adres van de nieuwe site (vult GitHub Actions zelf in).         |
 | `BASE_PATH`          | `/`                     | De map van de site op dat adres (vult GitHub Actions zelf in).      |
@@ -98,7 +110,8 @@ tabblad **Variables**. Krijgt de server van de app een ander adres, pas dan `SER
 Als www.curius.nl naar deze nieuwe site moet wijzen:
 
 1. Zorg dat de site in Genkgo bereikbaar blijft op een eigen adres, bijvoorbeeld `https://curius.genkgo.app`.
-2. Zet in GitHub de variabelen `BRON_URL` en `LEDEN_URL` op dat adres (zie hierboven).
+2. Zet in GitHub de variabelen `BRON_URL` en `LEDEN_URL` op dat adres (zie hierboven), en op de server van de app
+   `SITE_URL` in `server/.env` ook (anders vinden de app en de formulieren curius.nl niet meer).
 3. Vul bij **Settings**, **Pages** het eigen domein in en pas de DNS aan zoals GitHub daar uitlegt.
 
 De nieuwe site gebruikt dezelfde adressen als de oude, dus links van buitenaf blijven werken.

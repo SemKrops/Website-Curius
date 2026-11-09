@@ -106,6 +106,22 @@ function voegSamen(blokken) {
   return uit;
 }
 
+// Een formulier voor iedereen: de website laat het zelf zien via de Curius server
+// (lib/formulier.mjs), die de velden van curius.nl leest. Hier alleen op welke pagina
+// het formulier staat (uit het adres waar het naartoe gaat, zoals nl/contact!920) en de
+// links in de uitleg, zodat die straks naar pagina's op deze site kunnen.
+export function leesFormulier($, $el) {
+  const actie = String($el.find('form').first().attr('action') ?? '');
+  const pad = actie.replace(/[!?#].*$/, '').replace(/^\/+|\/+$/g, '');
+  const links = [];
+  $el.find('a[href]').each((_, a) => {
+    const href = $(a).attr('href');
+    const van = bronPad(href);
+    if (van && !links.some((l) => l.van === van)) links.push({ van, href });
+  });
+  return { type: 'formulier', pad: /^(nl|en)\/[\w/.-]+$/.test(pad) ? pad : undefined, links };
+}
+
 function leesElement($, el, blokken) {
   const $el = $(el);
   if (el.type !== 'tag') return;
@@ -126,12 +142,8 @@ function leesElement($, el, blokken) {
   if ($el.is('.career-profile, .career-element')) return leesCarriereProfiel($, $el, blokken);
   if ($el.is('.career-profile-items')) return leesVacatureGroepen($, $el, blokken);
   if ($el.is('.c-fullcalendar')) return blokken.push({ type: 'agenda', items: leesKalender($, $el) });
-  if ($el.is('.customform')) {
-    const titel = tekstVan($, $el.find('legend').first());
-    return blokken.push({ type: 'formulier', titel });
-  }
-  // Wachtwoord vergeten: ook een formulier op de ledenomgeving.
-  if ($el.is('#changepassword')) return blokken.push({ type: 'formulier', titel: '' });
+  // Een formulier voor iedereen (zoals contact, lid worden of wachtwoord vergeten).
+  if ($el.is('.customform, #changepassword')) return blokken.push(leesFormulier($, $el));
   if ($el.is('.c-blog-article__header')) {
     const datum = tekstVan($, $el.find('.c-blog-article__time'));
     if (datum) blokken.push({ type: 'datum', tekst: datum });

@@ -1,0 +1,672 @@
+{
+ "en/forms/become-member-employees": {
+  "velden": [
+   {
+    "sleutel": "givenname",
+    "soort": "tekst",
+    "label": "First name",
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "surname",
+    "soort": "tekst",
+    "label": "Last name",
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "birthdate",
+    "soort": "datum",
+    "label": "Date of birth (mm-dd-yyyy)",
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "photo",
+    "soort": "bestand",
+    "label": "Profile picture",
+    "groep": "Profile picture"
+   },
+   {
+    "sleutel": "mail",
+    "soort": "tekst",
+    "label": "E-mail",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "mobile",
+    "soort": "tekst",
+    "label": "Mobile phone",
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "street",
+    "soort": "tekst",
+    "label": "Address (incl. number)",
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "postalcode",
+    "soort": "tekst",
+    "label": "Zipcode",
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "city",
+    "soort": "tekst",
+    "label": "City",
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "password",
+    "soort": "wachtwoord",
+    "label": "Password",
+    "verplicht": true,
+    "groep": "Account"
+   },
+   {
+    "sleutel": "password2",
+    "soort": "wachtwoord",
+    "label": "Password confirmation",
+    "verplicht": true,
+    "groep": "Account"
+   },
+   {
+    "sleutel": "billingaccount",
+    "soort": "tekst",
+    "label": "IBAN",
+    "verplicht": true,
+    "groep": "Finances"
+   },
+   {
+    "sleutel": "x_Toestemmingautomatischeincasso",
+    "soort": "vinkje",
+    "label": "Approval for automatic payment",
+    "waarde": false,
+    "verplicht": true,
+    "groep": "Finances"
+   },
+   {
+    "sleutel": "x_Termsconditions",
+    "soort": "vinkje",
+    "label": "Terms & Conditions",
+    "waarde": false,
+    "verplicht": true,
+    "groep": "Terms & Coniditons - Membership employees"
+   },
+   {
+    "sleutel": "x_Consul",
+    "soort": "lijst",
+    "label": "Consul",
+    "opties": [
+     {
+      "waarde": "",
+      "label": ""
+     },
+     {
+      "waarde": "Online",
+      "label": "Online"
+     },
+     {
+      "waarde": "By mail",
+      "label": "By mail"
+     }
+    ],
+    "verplicht": true,
+    "groep": "Consul"
+   },
+   {
+    "sleutel": "__captcha",
+    "soort": "tekst",
+    "label": "1 or 2-digit number",
+    "verplicht": true,
+    "voorbeeld": "##",
+    "groep": "Confirm not a robot",
+    "patroon": "[0-9]{1,2}"
+   }
+  ],
+  "uitleg": [
+   {
+    "groep": "Finances",
+    "delen": [
+     {
+      "tekst": "By giving approval for the automatic payment, you agree with an automatic payment of EUR 8,00 per year. The payment will take place around February each year."
+     }
+    ]
+   },
+   {
+    "groep": "Terms & Coniditons - Membership employees",
+    "delen": [
+     {
+      "tekst": "I hereby declare to accept the "
+     },
+     {
+      "tekst": "Terms & Condition of the membership of S.V.T.B. Curius",
+      "link": "http://www.curius.nl/en/terms-conditions"
+     },
+     {
+      "tekst": "."
+     }
+    ]
+   },
+   {
+    "groep": "Consul",
+    "delen": [
+     {
+      "tekst": "Would you like to receive our magazine the 'Consul' online or by mail? You can always find the 'Consul' on our website."
+     }
+    ]
+   },
+   {
+    "groep": "Confirm not a robot",
+    "delen": [
+     {
+      "tekst": "Please complete the expression to confirm you are not a robot, and use digits when answering."
+     }
+    ]
+   }
+  ],
+  "som": "__captcha",
+  "knop": "send"
+ },
+ "en/forms/become-member": {
+  "velden": [
+   {
+    "sleutel": "givenname",
+    "soort": "tekst",
+    "label": "First name",
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "middlename",
+    "soort": "tekst",
+    "label": "Middle name",
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "surname",
+    "soort": "tekst",
+    "label": "Last name",
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "gender",
+    "soort": "lijst",
+    "label": "Gender",
+    "opties": [
+     {
+      "waarde": "",
+      "label": ""
+     },
+     {
+      "waarde": "male",
+      "label": "male"
+     },
+     {
+      "waarde": "female",
+      "label": "female"
+     },
+     {
+      "waarde": "remaining",
+      "label": "remaining"
+     },
+     {
+      "waarde": "no awnser",
+      "label": "no awnser"
+     }
+    ],
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "birthdate",
+    "soort": "datum",
+    "label": "Date of birth (mm-dd-yyyy)",
+    "verplicht": true,
+    "groep": "Personal information"
+   },
+   {
+    "sleutel": "photo",
+    "soort": "bestand",
+    "label": "Profile picture",
+    "groep": "Profile picture"
+   },
+   {
+    "sleutel": "mail",
+    "soort": "tekst",
+    "label": "E-mail",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "mobile",
+    "soort": "tekst",
+    "label": "Mobile phone",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "x_Studentnummer",
+    "soort": "tekst",
+    "label": "Student Number",
+    "verplicht": true,
+    "max": 10,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "street",
+    "soort": "tekst",
+    "label": "Address (incl. number)",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "postalcode",
+    "soort": "tekst",
+    "label": "Zipcode (1234 AB)",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "city",
+    "soort": "tekst",
+    "label": "City",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "x_EmailOuders",
+    "soort": "tekst",
+    "label": "Email parents (This will be used to invite your parents to the 'Ouderdag' of all first years bachelor students)",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "x_TelefoonOuders",
+    "soort": "tekst",
+    "label": "Parents phone number (in case of emergency)",
+    "verplicht": true,
+    "groep": "Contact info"
+   },
+   {
+    "sleutel": "password",
+    "soort": "wachtwoord",
+    "label": "Password",
+    "verplicht": true,
+    "groep": "Account"
+   },
+   {
+    "sleutel": "password2",
+    "soort": "wachtwoord",
+    "label": "Password confirmation",
+    "verplicht": true,
+    "groep": "Account"
+   },
+   {
+    "sleutel": "x_StartdatumStudie",
+    "soort": "datum",
+    "label": "Start of study",
+    "verplicht": true,
+    "groep": "Study"
+   },
+   {
+    "sleutel": "x_Studie2",
+    "soort": "lijst",
+    "label": "Study",
+    "opties": [
+     {
+      "waarde": "",
+      "label": ""
+     },
+     {
+      "waarde": "Bachelor-TB",
+      "label": "Bachelor-TB"
+     },
+     {
+      "waarde": "Master-EPA",
+      "label": "Master-EPA"
+     },
+     {
+      "waarde": "Master-MOT",
+      "label": "Master-MOT"
+     },
+     {
+      "waarde": "Master-CoSEM",
+      "label": "Master-CoSEM"
+     },
+     {
+      "waarde": "Master-TIL",
+      "label": "Master-TIL"
+     },
+     {
+      "waarde": "Master-CME",
+      "label": "Master-CME"
+     },
+     {
+      "waarde": "Master-IE",
+      "label": "Master-IE"
+     },
+     {
+      "waarde": "TB-minor",
+      "label": "TB-minor"
+     }
+    ],
+    "verplicht": true,
+    "groep": "Study"
+   },
+   {
+    "sleutel": "x_Domein",
+    "soort": "lijst",
+    "label": "Domain (if applicable)",
+    "opties": [
+     {
+      "waarde": "",
+      "label": ""
+     },
+     {
+      "waarde": "E&I",
+      "label": "E&I"
+     },
+     {
+      "waarde": "T&L",
+      "label": "T&L"
+     },
+     {
+      "waarde": "D&D",
+      "label": "D&D"
+     },
+     {
+      "waarde": "I&C",
+      "label": "I&C"
+     },
+     {
+      "waarde": "Nog niet gekozen",
+      "label": "Nog niet gekozen"
+     }
+    ],
+    "groep": "Study"
+   },
+   {
+    "sleutel": "x_IBAN",
+    "soort": "tekst",
+    "label": "IBAN",
+    "verplicht": true,
+    "groep": "Finances"
+   },
+   {
+    "sleutel": "x_Toestemmingautomatischeincasso",
+    "soort": "vinkje",
+    "label": "Approval for automatic payment",
+    "waarde": false,
+    "verplicht": true,
+    "groep": "Finances"
+   },
+   {
+    "sleutel": "x_Careervision",
+    "soort": "vinkje",
+    "label": "Career Vision",
+    "waarde": false,
+    "verplicht": true,
+    "groep": "Career"
+   },
+   {
+    "sleutel": "x_CareerNewsflash",
+    "soort": "vinkje",
+    "label": "Career Newsflash",
+    "waarde": false,
+    "verplicht": true,
+    "groep": "Career"
+   },
+   {
+    "sleutel": "x_ToestemmingTermsConditions",
+    "soort": "vinkje",
+    "label": "Terms & Conditions",
+    "waarde": false,
+    "verplicht": true,
+    "groep": "Terms & Conditions - Membership"
+   },
+   {
+    "sleutel": "x_Ledenlijstprivacy",
+    "soort": "vinkje",
+    "label": "Do not show my personal information",
+    "waarde": false,
+    "groep": "Terms & Conditions - Membership"
+   },
+   {
+    "sleutel": "x_Consul",
+    "soort": "lijst",
+    "label": "Consul",
+    "opties": [
+     {
+      "waarde": "",
+      "label": ""
+     },
+     {
+      "waarde": "E-mail",
+      "label": "E-mail"
+     },
+     {
+      "waarde": "Post",
+      "label": "Post"
+     }
+    ],
+    "verplicht": true,
+    "groep": "Consul"
+   },
+   {
+    "sleutel": "__captcha",
+    "soort": "tekst",
+    "label": "1 or 2-digit number",
+    "verplicht": true,
+    "voorbeeld": "##",
+    "groep": "Confirm not a robot",
+    "patroon": "[0-9]{1,2}"
+   }
+  ],
+  "uitleg": [
+   {
+    "groep": "Finances",
+    "delen": [
+     {
+      "tekst": "By giving approval for the automatic payment, you agree with an automatic payment of EUR 10,00 per year. The payment will take place around February each year."
+     }
+    ]
+   },
+   {
+    "groep": "Career",
+    "delen": [
+     {
+      "tekst": "Curius provides numerous Career Events. If you want to stay up to date, we advise you to activate Career Vision and the Career Newsflash."
+     }
+    ]
+   },
+   {
+    "groep": "Terms & Conditions - Membership",
+    "delen": [
+     {
+      "tekst": "I hereby declare to accept the "
+     },
+     {
+      "tekst": "Terms & Condition of the membership of S.V.T.B. Curius",
+      "link": "http://www.curius.nl/en/terms-conditions"
+     },
+     {
+      "tekst": "."
+     }
+    ]
+   },
+   {
+    "groep": "Terms & Conditions - Membership",
+    "delen": [
+     {
+      "tekst": "It is optional to show your personal information on your profile. You can opt-out with the check-box below."
+     }
+    ]
+   },
+   {
+    "groep": "Consul",
+    "delen": [
+     {
+      "tekst": "Would you like to receive our magazine the 'Consul' online or by mail? You can always find the 'Consul' on our website."
+     }
+    ]
+   },
+   {
+    "groep": "Confirm not a robot",
+    "delen": [
+     {
+      "tekst": "Please complete the expression to confirm you are not a robot, and use digits when answering."
+     }
+    ]
+   }
+  ],
+  "som": "__captcha",
+  "knop": "send"
+ },
+ "nl/contact": {
+  "velden": [
+   {
+    "sleutel": "field396",
+    "soort": "tekstvak",
+    "label": "Naam",
+    "verplicht": true,
+    "groep": "Contact formulier"
+   },
+   {
+    "sleutel": "field397",
+    "soort": "tekstvak",
+    "label": "E-mail",
+    "verplicht": true,
+    "groep": "Contact formulier"
+   },
+   {
+    "sleutel": "field398",
+    "soort": "tekstvak",
+    "label": "Telefoonnummer",
+    "groep": "Contact formulier"
+   },
+   {
+    "sleutel": "field399",
+    "soort": "tekstvak",
+    "label": "Vraag",
+    "verplicht": true,
+    "groep": "Contact formulier"
+   },
+   {
+    "sleutel": "__captcha",
+    "soort": "tekst",
+    "label": "1 or 2-digit number",
+    "verplicht": true,
+    "voorbeeld": "##",
+    "groep": "Bevestiging geen robot",
+    "patroon": "[0-9]{1,2}"
+   }
+  ],
+  "uitleg": [
+   {
+    "groep": "Bevestiging geen robot",
+    "delen": [
+     {
+      "tekst": "Op dit formulier is een beveiliging actief. Los de som op om verder te gaan, en gebruik cijfers in het antwoord."
+     }
+    ]
+   }
+  ],
+  "som": "__captcha",
+  "knop": "versturen"
+ },
+ "en/forgot-password": {
+  "velden": [
+   {
+    "sleutel": "rq_uid",
+    "soort": "tekst",
+    "label": "Username"
+   }
+  ],
+  "uitleg": [
+   {
+    "delen": [
+     {
+      "tekst": "In many cases the username is the same as the e-mail address."
+     }
+    ]
+   }
+  ],
+  "knop": "request"
+ },
+ "en/contact": {
+  "velden": [
+   {
+    "sleutel": "field11",
+    "soort": "tekst",
+    "label": "Name",
+    "verplicht": true,
+    "groep": "Contact form"
+   },
+   {
+    "sleutel": "field12",
+    "soort": "tekst",
+    "label": "E-mail",
+    "verplicht": true,
+    "groep": "Contact form"
+   },
+   {
+    "sleutel": "field13",
+    "soort": "tekst",
+    "label": "Phone number",
+    "groep": "Contact form"
+   },
+   {
+    "sleutel": "field124",
+    "soort": "tekstvak",
+    "label": "Question",
+    "verplicht": true,
+    "groep": "Contact form"
+   },
+   {
+    "sleutel": "__captcha",
+    "soort": "tekst",
+    "label": "1 or 2-digit number",
+    "verplicht": true,
+    "voorbeeld": "##",
+    "groep": "Confirm not a robot",
+    "patroon": "[0-9]{1,2}"
+   }
+  ],
+  "uitleg": [
+   {
+    "groep": "Confirm not a robot",
+    "delen": [
+     {
+      "tekst": "Please complete the expression to confirm you are not a robot, and use digits when answering."
+     }
+    ]
+   }
+  ],
+  "som": "__captcha",
+  "knop": "send"
+ },
+ "nl/wachtwoord-vergeten": {
+  "velden": [
+   {
+    "sleutel": "rq_uid",
+    "soort": "tekst",
+    "label": "Gebruikersnaam"
+   }
+  ],
+  "uitleg": [
+   {
+    "delen": [
+     {
+      "tekst": "In veel gevallen is het e-mailadres ook de gebruikersnaam."
+     }
+    ]
+   }
+  ],
+  "knop": "aanvragen"
+ }
+}

@@ -8,6 +8,12 @@
 //
 // Inloggen met gebruikersnaam lid en wachtwoord curius. Met PROEF_SITE_VERLOPEN=1 doet
 // de server alsof de inlog op curius.nl verlopen is, zodat de website om je wachtwoord vraagt.
+//
+// Formulieren voor iedereen (contact, lid worden, wachtwoord vergeten): de velden staan in
+// proefformulieren.json, gemaakt met de echte server uit de pagina's van curius.nl. De som
+// tegen robots is steeds een andere optelsom. Typ ergens "verloopt" in een veld om te zien
+// wat er gebeurt als het formulier verlopen is. Met PROEF_FORMULIEREN_WEG=1 doet de server
+// alsof curius.nl even niet bereikbaar is.
 
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -107,10 +113,11 @@ const ALBUMS = [
 ];
 
 class Fout extends Error {
-  constructor(status, melding, code) {
+  constructor(status, melding, code, extra) {
     super(melding);
     this.status = status;
     this.code = code;
+    this.extra = extra;
   }
 }
 
@@ -138,6 +145,70 @@ async function formulier(req) {
 
 const wacht = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// --- Formulieren voor iedereen -------------------------------------------------------
+
+const FORMULIEREN = JSON.parse(readFileSync(new URL('./proefformulieren.json', import.meta.url), 'utf8'));
+const GETALLEN = {
+  nl: ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien', 'elf', 'twaalf'],
+  en: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'],
+};
+function nieuweSom(taal) {
+  const a = 1 + Math.floor(Math.random() * 12);
+  const b = 1 + Math.floor(Math.random() * 12);
+  const vraag = taal === 'en' ? `${GETALLEN.en[a]} plus ${GETALLEN.en[b]} equals =` : `${GETALLEN.nl[a]} plus ${GETALLEN.nl[b]} is =`;
+  const afbeelding = `data:image/svg+xml;base64,${Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0" width="24ch" height="18"><text x="10" y="14" fill="#000000">${vraag}</text></svg>`).toString('base64')}`;
+  return { vraag, afbeelding, antwoord: String(a + b) };
+}
+const BEDANKT = {
+  'nl/contact': 'Bedankt voor je bericht!\nWe nemen zo snel mogelijk contact met je op.',
+  'en/contact': 'Thank you for your message!\nWe will contact you as soon as possible.',
+  'nl/wachtwoord-vergeten': 'Er is een e-mail gestuurd met een link om een nieuw wachtwoord te kiezen.',
+  'en/forgot-password': 'We sent an e-mail with a link to choose a new password.',
+};
+const geopend = new Map(); // code -> { pad, som }
+
+function openFormulier(pad) {
+  if (process.env.PROEF_FORMULIEREN_WEG === '1') throw new Fout(502, 'De website van Curius is nu even niet bereikbaar. Probeer het later opnieuw.');
+  const f = FORMULIEREN[pad];
+  if (!f) throw new Fout(404, 'Dit formulier staat niet (meer) op de site van Curius.', 'geen_formulier');
+  const code = randomBytes(16).toString('hex');
+  const som = f.som ? nieuweSom(pad.slice(0, 2)) : null;
+  geopend.set(code, { pad, som });
+  return { code, velden: f.velden, uitleg: f.uitleg, robot: som ? { sleutel: f.som, vraag: som.vraag, afbeelding: som.afbeelding } : null, knop: f.knop };
+}
+
+async function verstuurFormulier(req, pad) {
+  const form = await formulier(req);
+  const b = geopend.get(String(form.get('code') ?? ''));
+  if (!b || b.pad !== pad) throw new Fout(410, 'Het formulier was verlopen en is opnieuw geladen. Verstuur het nog een keer.', 'formulier_verlopen');
+  const f = FORMULIEREN[pad];
+  const invoer = JSON.parse(String(form.get('gegevens') ?? '{}'));
+  if (Object.values(invoer).includes('verloopt')) {
+    geopend.delete(String(form.get('code')));
+    throw new Fout(410, 'Het formulier was verlopen en is opnieuw geladen. Verstuur het nog een keer.', 'formulier_verlopen');
+  }
+  for (const v of f.velden) {
+    if (!v.verplicht || v.sleutel === f.som) continue;
+    const w = v.soort === 'bestand' ? form.get(`bestand:${v.sleutel}`) : invoer[v.sleutel];
+    if (w === undefined || w === null || w === '' || w === false) throw new Fout(400, `${v.label} is verplicht.`);
+  }
+  const fouten = [];
+  if (b.som && String(invoer[f.som] ?? '') !== b.som.antwoord) fouten.push(pad.startsWith('en') ? 'The answer to the sum is incorrect.' : 'Het antwoord op de som klopt niet.');
+  if (invoer.password !== undefined && invoer.password !== invoer.password2) fouten.push('The passwords do not match.');
+  if (pad.includes('wachtwoord') || pad.includes('forgot')) {
+    if (invoer.rq_uid !== GEBRUIKER) fouten.push(pad.startsWith('en') ? 'This username is unknown.' : 'Deze gebruikersnaam is niet bekend.');
+  }
+  if (fouten.length) {
+    b.som = b.som ? nieuweSom(pad.slice(0, 2)) : null;
+    const robot = b.som ? { sleutel: f.som, vraag: b.som.vraag, afbeelding: b.som.afbeelding } : null;
+    throw new Fout(422, fouten.join('\n'), 'niet_verstuurd', { robot, opnieuw: true });
+  }
+  geopend.delete(String(form.get('code')));
+  const bestanden = [...form.keys()].filter((k) => k.startsWith('bestand:'));
+  console.log(`Formulier ${pad} verstuurd${bestanden.length ? ` met ${bestanden.length} bestand(en)` : ''}.`);
+  return { melding: BEDANKT[pad] ?? (pad.startsWith('en') ? 'Welcome to Curius!\nWe will process your registration soon.' : 'Het formulier is verstuurd. Bedankt!') };
+}
+
 async function routes(req, url) {
   const pad = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
@@ -145,6 +216,11 @@ async function routes(req, url) {
   await wacht(150 + Math.random() * 250);
 
   if (pad === '/' && m === 'GET') return { naam: 'Curius proefserver', status: '/status' };
+  if (deel[0] === 'formulieren') {
+    const formulierPad = deel.slice(1).join('/');
+    if (m === 'GET') return openFormulier(formulierPad);
+    if (m === 'POST') return verstuurFormulier(req, formulierPad);
+  }
   if (pad === '/inloggen' && m === 'POST') {
     const { gebruikersnaam, wachtwoord } = await json(req);
     if (!gebruikersnaam || !wachtwoord) throw new Fout(400, 'Vul je gebruikersnaam en wachtwoord in.');
@@ -287,7 +363,7 @@ createServer(async (req, res) => {
     const status = e instanceof Fout ? e.status : 500;
     if (!(e instanceof Fout)) console.error(e);
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(e.code ? { melding: e.message, code: e.code } : { melding: e.message }));
+    res.end(JSON.stringify({ ...(e.extra ?? {}), melding: e.message, ...(e.code ? { code: e.code } : {}) }));
   } finally {
     if (!process.env.STIL) console.log(`${req.method} ${url.pathname} ${res.statusCode}`);
   }

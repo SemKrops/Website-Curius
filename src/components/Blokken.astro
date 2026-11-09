@@ -4,8 +4,8 @@ import ActiviteitKaart from './ActiviteitKaart.astro';
 import Agenda from './Agenda.astro';
 import Icoon from './Icoon.astro';
 import Kaart from './Kaart.astro';
+import OpenbaarFormulier from './OpenbaarFormulier.astro';
 import Vacatures from './Vacatures.astro';
-import { t as teksten } from '../lib/teksten.mjs';
 import { initialen } from '../lib/vorm.mjs';
 
 interface Props {
@@ -16,7 +16,6 @@ interface Props {
 }
 const { site, taal, pagina } = Astro.props;
 const blokken = Astro.props.blokken ?? pagina.blokken;
-const t = teksten(taal);
 const basis = site.basis;
 const activiteitOp = new Map(site.activiteiten[taal].map((a: any) => [a.pad, a]));
 const isActiviteitKaart = (k: any) => k.pad && activiteitOp.has(k.pad);
@@ -127,19 +126,7 @@ const isActiviteitKaart = (k: any) => k.pad && activiteitOp.has(k.pad);
       case 'agenda':
         return <Agenda activiteiten={site.activiteiten[taal]} taal={taal} feed={site.links[taal].agendaFeed} />;
       case 'formulier':
-        return (
-          <div class="melding">
-            <Icoon naam="file" grootte={24} />
-            <div>
-              <h3>{blok.titel || t.formulierKnop}</h3>
-              <p>{t.formulierTekst}</p>
-              <a class="knop knop--primair knop--klein" href={pagina.bron}>
-                {t.formulierKnop}
-                <Icoon naam="external" grootte={16} />
-              </a>
-            </div>
-          </div>
-        );
+        return <OpenbaarFormulier blok={blok} pagina={pagina} taal={taal} />;
       default:
         return null;
     }

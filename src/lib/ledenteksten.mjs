@@ -125,6 +125,20 @@ const nl = {
   vorige: 'Vorige',
   volgende: 'Volgende',
   foto: (i, n) => `Foto ${i} van ${n}`,
+
+  // Formulieren voor iedereen, zoals lid worden en contact
+  maakKeuze: 'Maak een keuze',
+  formulierNietGeladen: 'Het formulier kan nu niet worden geladen',
+  formulierOudeSite: 'Formulier op de oude site',
+  formulierElders: 'Dit formulier vul je voorlopig nog in op de oude site van Curius.',
+  formulierOpenen: 'Formulier openen',
+  formulierVerstuurd: 'Verstuurd',
+  somKop: 'Reken de som uit',
+  somAfbeelding: 'De som tegen robots',
+  somOnleesbaar: 'De som tegen robots op dit formulier kunnen we hier niet laten zien. Probeer het later opnieuw.',
+  nieuweSom: 'Vul ook het antwoord op de nieuwe som in.',
+  wachtwoordenAnders: 'De twee wachtwoorden zijn niet hetzelfde.',
+  bestandenTeGroot: 'De bestanden zijn samen groter dan 12 MB.',
 };
 
 const en = {
@@ -249,6 +263,20 @@ const en = {
   vorige: 'Previous',
   volgende: 'Next',
   foto: (i, n) => `Photo ${i} of ${n}`,
+
+  // Forms for everyone, such as becoming a member and contact
+  maakKeuze: 'Choose an option',
+  formulierNietGeladen: 'The form cannot be loaded right now',
+  formulierOudeSite: 'Form on the old website',
+  formulierElders: 'For now, you fill in this form on the old Curius website.',
+  formulierOpenen: 'Open the form',
+  formulierVerstuurd: 'Sent',
+  somKop: 'Solve the sum',
+  somAfbeelding: 'The sum against robots',
+  somOnleesbaar: 'We cannot show the sum against robots of this form here. Please try again later.',
+  nieuweSom: 'Please also answer the new sum.',
+  wachtwoordenAnders: 'The two passwords are not the same.',
+  bestandenTeGroot: 'Together the files are larger than 12 MB.',
 };
 
 export const ledenTeksten = { nl, en };

@@ -19,11 +19,13 @@ const server = () => String(html()?.dataset?.server ?? '').replace(/\/+$/, '');
 
 // Een fout van de server, met de melding in de taal van de pagina. De code zegt soms wat
 // er moet gebeuren, zoals site_inloggen: vraag het wachtwoord nog een keer.
+// Met `gegevens` het hele antwoord van de server, zoals de nieuwe som bij een formulier.
 export class LedenFout extends Error {
-  constructor(melding, status = 0, code = undefined) {
+  constructor(melding, status = 0, code = undefined, gegevens = undefined) {
     super(melding);
     this.status = status;
     this.code = code;
+    this.gegevens = gegevens;
   }
 }
 
@@ -89,16 +91,18 @@ export async function vraag(pad, { methode = 'GET', body, token = sessie()?.toke
   if (!res.ok) {
     let melding = tekst().ietsMis;
     let code;
+    let gegevens;
     try {
       const antwoord = await res.json();
       if (antwoord?.melding) melding = antwoord.melding;
       code = antwoord?.code;
+      if (antwoord && typeof antwoord === 'object') gegevens = antwoord;
     } catch {
       // Geen JSON: dan de algemene melding.
     }
     // De sessie is verlopen (of iemand is geen lid meer): dan uitgelogd.
     if (res.status === 401 && token && token === sessie()?.token) zetSessie(null);
-    throw new LedenFout(melding, res.status, code);
+    throw new LedenFout(melding, res.status, code, gegevens);
   }
   if (res.status === 204) return null;
   return /json/i.test(res.headers.get('content-type') ?? '') ? res.json() : res.blob();
